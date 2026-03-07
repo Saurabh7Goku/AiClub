@@ -140,7 +140,7 @@ export const joinClub = async (uid: string, joinKey: string): Promise<Club> => {
   const userData = userDoc.data() as UserFirestore;
   const joinedClubs = userData.joinedClubs || [];
 
-  if (joinedClubs.includes(clubId)) throw new Error('Already a member of this club');
+  if (joinedClubs.includes(clubId)) throw new Error('Already a member of this cluster');
 
   const batch = writeBatch(db);
   batch.update(userRef, {

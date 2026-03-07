@@ -102,6 +102,23 @@ export default function ClubsPage() {
                 )}
             </div>
 
+            {/* Guest Access Banner for Recruiters */}
+            <div className="bg-gradient-to-r from-accent-500/20 to-transparent border-l-4 border-accent-500 p-6 rounded-r-2xl backdrop-blur-md animate-elevator-in">
+                <div className="flex items-start gap-4">
+                    <div className="bg-accent-500/20 p-2.5 rounded-xl">
+                        <svg className="w-6 h-6 text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div className="space-y-1">
+                        <h4 className="text-sm font-black text-white uppercase tracking-widest">Recruiter / Demo Access</h4>
+                        <p className="text-gray-400 text-sm font-medium">
+                            Use synchronization key <span className="text-accent-400 font-black border-b border-accent-400/50">123</span> to instantly bridge with the primary intelligence cluster for evaluation purposes.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             {/* Notifications */}
             <div className="space-y-4">
                 {error && (
