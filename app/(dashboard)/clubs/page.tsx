@@ -113,7 +113,7 @@ export default function ClubsPage() {
                     <div className="space-y-1">
                         <h4 className="text-sm font-black text-white uppercase tracking-widest">Recruiter / Demo Access</h4>
                         <p className="text-gray-400 text-sm font-medium">
-                            Use synchronization key <span className="text-accent-400 font-black border-b border-accent-400/50">123</span> to instantly bridge with the primary intelligence cluster for evaluation purposes.
+                            Use This key <span className="text-accent-400 font-black border-b border-accent-400/50">123</span> to instantly join the demo club named <span className="text-accent-400 font-black border-b border-accent-400/50">Ai4FUN</span>.
                         </p>
                     </div>
                 </div>
