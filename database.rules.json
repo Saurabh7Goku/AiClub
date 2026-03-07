@@ -1,0 +1,24 @@
+{
+    "rules": {
+        "videoRooms": {
+            "$meetingId": {
+                "participants": {
+                    ".read": "auth != null",
+                    "$uid": {
+                        ".write": "auth != null && auth.uid == $uid",
+                        ".validate": "newData.hasChildren(['displayName', 'joinedAt'])"
+                    }
+                },
+                "signals": {
+                    "$uid": {
+                        ".read": "auth != null && auth.uid == $uid",
+                        "$signalId": {
+                            ".write": "auth != null && (newData.exists() ? (newData.child('to').val() == $uid && newData.child('from').val() == auth.uid) : (auth.uid == $uid))",
+                            ".validate": "newData.exists() ? newData.hasChildren(['type', 'from', 'to', 'data', 'timestamp']) : true"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

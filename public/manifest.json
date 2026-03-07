@@ -1,0 +1,19 @@
+{
+  "name": "AI/ML Intelligence Club",
+  "short_name": "AI Club",
+  "description": "AI/ML Intelligence Club Platform - Collaborate, innovate, and build the future of AI",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#10b981",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["education", "productivity", "social"],
+  "lang": "en"
+}

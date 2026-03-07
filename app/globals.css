@@ -1,0 +1,232 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 23, 23, 23;
+  --background-rgb: 255, 255, 255;
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(0, 0, 0, 0.1);
+  --card-bg: 255, 255, 255;
+  --card-border: 229, 229, 229;
+  --primary-rgb: 245, 158, 11; /* amber-500 */
+}
+
+.light {
+  --foreground-rgb: 10, 10, 10;
+  --background-rgb: 252, 252, 252;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --card-bg: 255, 255, 255;
+  --card-border: 229, 229, 229;
+}
+
+html:not(.light) {
+  --foreground-rgb: 243, 244, 246;
+  --background-rgb: 0, 0, 0; /* True black */
+  --glass-bg: 10, 10, 10;
+  --glass-border: 255, 255, 255;
+  --card-bg: 10, 10, 10;
+  --card-border: 38, 38, 38;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 15px;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Auth pages adaptive background */
+body.auth-page {
+  background: rgb(var(--background-rgb)) !important;
+  color: rgb(var(--foreground-rgb)) !important;
+  overflow: hidden;
+}
+
+/* Global contrast overrides for light theme */
+.light .text-white {
+  color: rgb(var(--foreground-rgb)) !important;
+}
+
+.light .text-gray-400,
+.light .text-gray-300,
+.light .text-gray-500 {
+  color: rgba(var(--foreground-rgb), 0.75) !important;
+}
+
+/* Solid background overrides */
+.light .bg-black,
+.light .bg-gray-950 {
+  background-color: rgb(var(--background-rgb)) !important;
+}
+
+
+.light .bg-gray-900,
+.light .bg-gray-800 {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Glass & Transparency overrides */
+.light .bg-black\/20,
+.light .bg-black\/40,
+.light .bg-black\/60,
+.light .bg-white\/5,
+.light .bg-white\/\[0\.02\],
+.light .bg-white\/\[0\.04\],
+.light .bg-white\/\[0\.05\],
+.light .bg-white\/10 {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+.light .bg-black\/80,
+.light .bg-black\/90,
+.light .bg-black\/95 {
+  background-color: rgb(var(--card-bg)) !important;
+}
+
+/* Border overrides */
+.light .border-white\/5,
+.light .border-white\/10,
+.light .border-white\/20,
+.light .border-white\/30 {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Shadow overrides */
+.light .shadow-lg,
+.light .shadow-xl,
+.light .shadow-2xl,
+.light .shadow-\[0_4px_30px_rgba\(0\,0\,0\,0\.5\)\] {
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Selection overrides */
+.light .selection\:bg-accent-500\/30 {
+  @apply selection:bg-accent-500/20;
+}
+
+
+
+
+@layer components {
+  .btn {
+    @apply px-5 py-2.5 rounded-2xl font-bold text-sm transition-all duration-200 focus:outline-none active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest;
+  }
+
+  .btn-primary {
+    @apply border-2 border-transparent bg-accent-500 text-black font-black px-6 py-3 rounded-2xl transition-all text-sm uppercase tracking-widest disabled:opacity-50 hover:bg-accent-400;
+    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+  }
+
+  .btn-primary:hover {
+    box-shadow: 2px 2px 0px 0px rgba(0, 0, 0, 1);
+    transform: translate(2px, 2px);
+  }
+
+  .btn-primary:active {
+    transform: scale(0.98);
+  }
+
+  .light .btn-primary {
+    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Keep neobrutalist pop even in dark mode context, but with white theme colors */
+  .dark .btn-primary {
+    @apply bg-white text-black border-gray-900;
+    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+  }
+
+  .btn-secondary {
+    @apply border-2 border-gray-900 dark:border-gray-900 bg-white text-gray-900 font-black px-6 py-3 rounded-2xl transition-all text-sm uppercase tracking-widest hover:bg-gray-50;
+    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+  }
+
+  .btn-secondary:hover {
+    box-shadow: 2px 2px 0px 0px rgba(0, 0, 0, 1);
+    transform: translate(2px, 2px);
+  }
+
+  .btn-secondary:active {
+    transform: scale(0.98);
+  }
+
+  .btn-success {
+    @apply btn bg-accent-500 text-black border-2 border-accent-500 hover:bg-accent-400;
+    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+    transition: all 0.2s;
+  }
+
+  .btn-success:hover {
+    box-shadow: 2px 2px 0px 0px rgba(0, 0, 0, 1);
+    transform: translate(2px, 2px);
+  }
+
+  .card {
+     background-color: rgb(var(--card-bg));
+     border: 1px solid rgb(var(--card-border));
+     @apply rounded-3xl p-7 transition-all;
+  }
+
+  .card:hover {
+    border-color: var(--primary-rgb);
+    box-shadow: 0 10px 30px -10px rgba(var(--primary-rgb), 0.2);
+  }
+
+  .input {
+    background-color: rgb(var(--card-bg));
+    border: 1px solid rgb(var(--card-border));
+    color: rgb(var(--foreground-rgb));
+    @apply w-full px-4 py-3 rounded-2xl text-[15px] font-medium placeholder-gray-400 focus:outline-none focus:border-accent-500 transition-all duration-200;
+  }
+
+  .label {
+    @apply block text-[11px] font-black uppercase tracking-[0.2em] mb-2 ml-1 opacity-70;
+    color: rgb(var(--foreground-rgb));
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider border;
+  }
+
+  .badge-open {
+    @apply badge bg-blue-50 text-blue-600 border-blue-200;
+  }
+
+  .badge-under_review {
+    @apply badge bg-amber-50 text-amber-600 border-amber-200;
+  }
+
+  .badge-approved {
+    @apply badge bg-emerald-50 text-emerald-600 border-emerald-200;
+  }
+
+  .badge-rejected {
+    @apply badge bg-rose-50 text-rose-600 border-rose-200;
+  }
+
+  .badge-category {
+    @apply badge bg-gray-50 text-gray-600 border-gray-200;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-200 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-300;
+}
