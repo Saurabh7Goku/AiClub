@@ -9,7 +9,10 @@ import { saveCalendarIntegration } from '@/lib/firebase/firestore';
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const code = searchParams.get('code');
-    const userId = searchParams.get('userId');
+    const state = searchParams.get('state');
+
+    // Extract userId from state (format: google_calendar:userId)
+    const userId = state?.split(':')[1];
 
     if (!code || !userId) {
         return NextResponse.redirect(
@@ -59,8 +62,9 @@ export async function POST(request: Request) {
         }
 
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-        const redirectUri = `${baseUrl}/api/calendar/google?userId=${userId}`;
-        const authUrl = getGoogleAuthUrl(redirectUri);
+        const redirectUri = `${baseUrl}/api/calendar/google`;
+        const state = `google_calendar:${userId}`;
+        const authUrl = getGoogleAuthUrl(redirectUri, state);
 
         return NextResponse.json({ success: true, data: { authUrl } });
     } catch (error: any) {

@@ -12,7 +12,7 @@ const GOOGLE_CALENDAR_API = 'https://www.googleapis.com/calendar/v3';
 /**
  * Generate Google OAuth2 authorization URL
  */
-export function getGoogleAuthUrl(redirectUri: string): string {
+export function getGoogleAuthUrl(redirectUri: string, state: string = 'google_calendar'): string {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     if (!clientId) throw new Error('GOOGLE_CLIENT_ID not configured');
 
@@ -23,7 +23,7 @@ export function getGoogleAuthUrl(redirectUri: string): string {
         scope: 'https://www.googleapis.com/auth/calendar.events',
         access_type: 'offline',
         prompt: 'consent',
-        state: 'google_calendar',
+        state: state,
     });
 
     return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
