@@ -45,7 +45,7 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-950 light:bg-gray-50 relative overflow-hidden font-sans selection:bg-accent-500/30 py-4 sm:py-8 lg:py-0 transition-colors duration-500">
-      
+
       {/* Floating Theme Toggle */}
       <div className="absolute top-6 right-6 z-50">
         <button
@@ -97,7 +97,7 @@ export default function SignupPage() {
               <span className="text-transparent bg-clip-text bg-gradient-to-br from-accent-400 to-accent-600 font-bold text-lg lg:text-2xl tracking-tighter relative z-10 transition-transform duration-500 group-hover:scale-110">AI</span>
             </div>
             <div className="text-left">
-              <span className="font-extrabold text-lg lg:text-xl text-white tracking-tight uppercase block leading-tight">MPOnline AI</span>
+              <span className="font-extrabold text-lg lg:text-xl text-white tracking-tight uppercase block leading-tight">AiClub AI</span>
               <span className="text-[9px] lg:text-[10px] font-bold text-accent-400 uppercase tracking-[0.3em] leading-none">Foundation Club</span>
             </div>
           </div>
@@ -172,7 +172,7 @@ export default function SignupPage() {
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   className="w-full bg-black/50 border border-white/10 text-white rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent-500/50 focus:ring-1 focus:ring-accent-500/30 transition-all placeholder:text-gray-600"
-                  placeholder="Renu Deshmukh"
+                  placeholder="Saurabh Singh"
                 />
               </div>
 
@@ -184,7 +184,7 @@ export default function SignupPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-black/50 border border-white/10 text-white rounded-xl px-4 py-2.5 text-sm outline-none focus:border-accent-500/50 focus:ring-1 focus:ring-accent-500/30 transition-all placeholder:text-gray-600"
-                  placeholder="name@mponline.com"
+                  placeholder="name@AiClub.com"
                 />
               </div>
 

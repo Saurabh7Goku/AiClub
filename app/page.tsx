@@ -40,15 +40,15 @@ function Navbar() {
     ];
 
     return (
-        <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled 
-            ? 'py-3 bg-white/70 dark:bg-black/60 backdrop-blur-xl border-b border-black/5 dark:border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.5)]' 
+        <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
+            ? 'py-3 bg-white/70 dark:bg-black/60 backdrop-blur-xl border-b border-black/5 dark:border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.5)]'
             : 'py-5 bg-transparent'
             }`}>
             <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 flex items-center justify-between h-12">
                 <Link href="/" className="flex items-center gap-3 group outline-none">
                     <AILogo size={40} />
                     <div className="hidden sm:flex flex-col">
-                        <span className="font-extrabold text-sm text-white leading-none tracking-tight uppercase">MPOnline AI</span>
+                        <span className="font-extrabold text-sm text-white leading-none tracking-tight uppercase">AiClub AI</span>
                         <span className="text-[10px] font-bold text-accent-500 uppercase tracking-[0.15em] leading-none mt-1">Foundation Club</span>
                     </div>
                 </Link>
@@ -137,7 +137,7 @@ function HeroSection() {
                     <div className="space-y-8 animate-elevator-in">
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent-500/10 border border-accent-500/20 text-[10px] font-bold uppercase tracking-[0.2em] shadow-[0_0_15px_rgba(16,185,129,0.1)] text-accent-400 backdrop-blur-md">
                             <span className="w-1.5 h-1.5 rounded-full bg-accent-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse" />
-                            MPOnline AI Innovation Club
+                            AiClub AI Innovation Club
                         </div>
 
                         <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-[1.1] uppercase tracking-tight">
@@ -148,7 +148,7 @@ function HeroSection() {
 
                         <p className="text-lg md:text-xl text-gray-400 max-w-xl leading-relaxed font-medium">
                             The internal hub for submitting AI ideas, peer voting, AI-assisted drafting,
-                            and collaborative meetings &mdash; built for MPOnline employees.
+                            and collaborative meetings &mdash; built for AiClub employees.
                         </p>
 
                         <div className="flex flex-wrap gap-4 pt-4">
@@ -168,9 +168,9 @@ function HeroSection() {
 
                     {/* Right — Feature chips */}
                     <div className="flex flex-wrap gap-4 content-start animate-elevator-in-delay-1 relative">
-                         {/* Subtle decoration */}
+                        {/* Subtle decoration */}
                         <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent rounded-[3rem] border border-white/5 backdrop-blur-sm -z-10 transform rotate-3 scale-105" />
-                        
+
                         {[
                             { icon: '💡', lbl: 'Idea Submission' },
                             { icon: '🗳', lbl: 'Peer Voting' },
@@ -228,7 +228,7 @@ function FeaturesSection() {
 
     return (
         <section className="py-32 relative" id="features">
-             <div className="absolute inset-0 bg-black/40 backdrop-blur-3xl z-0" />
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-3xl z-0" />
             <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 relative z-10">
                 <div className="mb-20 text-center max-w-3xl mx-auto">
                     <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 text-white text-[10px] font-bold uppercase tracking-[0.2em] rounded-full shadow-[0_0_15px_rgba(255,255,255,0.05)] mb-6 backdrop-blur-md">
@@ -242,7 +242,7 @@ function FeaturesSection() {
                         <div key={i} className="bg-white/5 border border-white/10 rounded-[2rem] p-8 group hover:bg-white/10 transition-all duration-500 hover:-translate-y-2 relative overflow-hidden">
                             {/* Glow effect on hover */}
                             <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                            
+
                             <div className={`w-14 h-14 rounded-2xl ${f.bg} border ${f.border} flex items-center justify-center mb-6 text-2xl group-hover:scale-110 transition-transform duration-500 shadow-inner relative z-10`}>
                                 {f.icon}
                             </div>
@@ -268,7 +268,7 @@ function HowItWorksSection() {
     return (
         <section className="py-32 relative overflow-hidden" id="how-it-works">
             <div className="absolute top-1/2 left-0 w-96 h-96 bg-primary-500/5 blur-[120px] rounded-full pointer-events-none -translate-y-1/2 -translate-x-1/2" />
-            
+
             <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 relative z-10">
                 <div className="mb-20">
                     <div className="inline-flex items-center px-4 py-2 bg-white/5 border border-white/10 text-white text-[10px] font-bold uppercase tracking-[0.2em] rounded-full shadow-[0_0_15px_rgba(255,255,255,0.05)] mb-6 backdrop-blur-md">
@@ -281,7 +281,7 @@ function HowItWorksSection() {
                     {steps.map((step, i) => (
                         <div key={i} className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-10 relative overflow-hidden group hover:border-white/20 transition-all duration-500 hover:-translate-y-1">
                             <div className="absolute top-[-20%] right-[-10%] text-[10rem] font-black text-white/[0.02] leading-none select-none group-hover:text-white/[0.04] transition-colors duration-500">{step.num}</div>
-                            
+
                             <div className={`w-12 h-12 rounded-xl ${step.bg} border ${step.border} flex items-center justify-center mb-8 text-[12px] font-extrabold shadow-inner relative z-10`}>
                                 {step.num}
                             </div>
@@ -410,7 +410,7 @@ function TechFeedPreview() {
 
     return (
         <section className="py-32 relative" id="ai-news">
-             <div className="absolute inset-0 bg-black/40 backdrop-blur-3xl z-0" />
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-3xl z-0" />
             <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 relative z-10">
                 <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-6 mb-12">
                     <div>
@@ -557,13 +557,13 @@ function AboutSection() {
 function CTASection() {
     return (
         <section className="py-32 relative overflow-hidden bg-black">
-             {/* Center Glow */}
-             <div className="absolute top-1/2 left-1/2 w-[600px] h-[600px] bg-primary-500/10 blur-[150px] rounded-full pointer-events-none -translate-y-1/2 -translate-x-1/2" />
-             
+            {/* Center Glow */}
+            <div className="absolute top-1/2 left-1/2 w-[600px] h-[600px] bg-primary-500/10 blur-[150px] rounded-full pointer-events-none -translate-y-1/2 -translate-x-1/2" />
+
             <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
                 <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-accent-500/10 border border-accent-500/20 text-accent-400 text-[10px] font-bold uppercase tracking-[0.2em] mb-10 shadow-[0_0_20px_rgba(16,185,129,0.15)] backdrop-blur-md">
                     <AILogo size={24} />
-                    MPOnline AI Innovation Club
+                    AiClub AI Innovation Club
                 </div>
                 <h2 className="text-5xl md:text-6xl font-extrabold text-white uppercase tracking-tight mb-8">Ready to Build<br />the <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-400 to-amber-600">Future?</span></h2>
                 <p className="text-gray-400 text-lg md:text-xl mb-12 max-w-2xl mx-auto font-medium leading-relaxed">
@@ -592,8 +592,8 @@ function Footer() {
                 <div className="flex items-center gap-4">
                     <AILogo size={40} />
                     <div>
-                        <span className="text-white font-extrabold text-sm uppercase tracking-tight block">MPOnline AI Foundation Club</span>
-                        <span className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">@RenuDeshmukh &mdash; &copy; 2026</span>
+                        <span className="text-white font-extrabold text-sm uppercase tracking-tight block">AiClub AI Foundation Club</span>
+                        <span className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">@SaurabhSingh &mdash; &copy; 2026</span>
                     </div>
                 </div>
                 <div className="flex items-center gap-6 flex-wrap justify-center">

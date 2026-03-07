@@ -52,7 +52,7 @@ function renderDigestEmail(items: any[]) {
                 ${itemsHtml}
             </div>
             <div style="padding: 20px; border-top: 1px solid #e5e7eb; text-align: center; font-size: 10px; color: #9ca3af;">
-                &copy; 2026 MPONLINE AI INNOVATION CLUB | <a href="#" style="color: #9ca3af;">Unsubscribe</a>
+                &copy; 2026 AiClub AI INNOVATION CLUB | <a href="#" style="color: #9ca3af;">Unsubscribe</a>
             </div>
         </div>
     `;
@@ -66,5 +66,5 @@ async function sendEmail(to: string, subject: string, html: string) {
     // console.log(`[EMAIL_MOCK] HTML: ${html.slice(0, 100)}...`);
 
     // Placeholder for actual implementation:
-    // const res = await resend.emails.send({ from: 'club@mponline.gov.in', to, subject, html });
+    // const res = await resend.emails.send({ from: 'club@AiClub.gov.in', to, subject, html });
 }

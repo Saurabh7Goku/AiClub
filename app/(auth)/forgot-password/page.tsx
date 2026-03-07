@@ -31,8 +31,8 @@ export default function ForgotPasswordPage() {
     };
 
     return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-950 light:bg-gray-50 relative overflow-hidden font-sans selection:bg-accent-500/30 py-4 sm:py-8 lg:py-0 transition-colors duration-500">
-            
+        <div className="min-h-screen flex items-center justify-center bg-gray-950 light:bg-gray-50 relative overflow-hidden font-sans selection:bg-accent-500/30 py-4 sm:py-8 lg:py-0 transition-colors duration-500">
+
             {/* Floating Theme Toggle */}
             <div className="absolute top-6 right-6 z-50">
                 <button
@@ -117,7 +117,7 @@ export default function ForgotPasswordPage() {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     className="w-full bg-black/50 border border-white/10 text-white rounded-2xl px-5 py-4 text-sm outline-none focus:border-accent-500/50 focus:ring-2 focus:ring-accent-500/20 transition-all placeholder:text-gray-600"
-                                    placeholder="name@mponline.com"
+                                    placeholder="name@AiClub.com"
                                 />
                             </div>
 

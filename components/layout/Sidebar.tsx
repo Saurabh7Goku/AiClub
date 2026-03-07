@@ -246,7 +246,7 @@ export default function Sidebar({ isCollapsed, setIsCollapsed, isMobileOpen, set
 
             {/* Footer / Credits */}
             <div className="p-3 border-t border-white/10 font-mono text-[9px] text-gray-500 uppercase tracking-widest text-center mt-auto bg-black/10 dark:bg-white/[0.02]">
-                &copy; RenuDeshmukh
+                &copy; SaurabhSingh
             </div>
 
             <style jsx>{`

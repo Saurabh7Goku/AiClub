@@ -57,9 +57,9 @@ npm run seed
 ```
 
 This creates:
-- **Admin User**: Renu Deshmukh
-- **Email**: renu.deshmukh@aimlclub.com
-- **Password**: Renu@2318
+- **Admin User**: Saurabh Singh
+- **Email**: Saurabh.Singh@aimlclub.com
+- **Password**: Saurabh@2318
 - **Role**: admin (full access)
 
 ## 🔑 Features
@@ -139,7 +139,7 @@ ai-ml-club/
 ## 🧪 Testing the Workflow
 
 1. **Run seed script** to create admin user
-2. **Sign in** as admin (renu.deshmukh@aimlclub.com / Renu@2318)
+2. **Sign in** as admin (Saurabh.Singh@aimlclub.com / Saurabh@2318)
 3. **Or use Google Sign-in** for quick access
 4. **Submit ideas** from dashboard
 5. **Vote** on ideas (IN or OUT)

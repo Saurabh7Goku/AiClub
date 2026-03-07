@@ -26,9 +26,9 @@ const db = getFirestore(app);
 
 // Admin user configuration
 const ADMIN_USER = {
-  displayName: 'Renu Deshmukh',
-  email: 'renu.deshmukh@aimlclub.com',
-  password: 'Renu@2318',
+  displayName: 'Saurabh Singh',
+  email: 'Saurabh.Singh@aimlclub.com',
+  password: 'Saurabh@2318',
   role: 'admin' as const,
 };
 
@@ -75,7 +75,7 @@ async function seedDatabase() {
   } catch (authError: unknown) {
     const errorCode = (authError as { code?: string })?.code;
     const errorMessage = (authError as { message?: string })?.message;
-    
+
     if (errorCode === 'auth/email-already-in-use') {
       console.log('⚠️  Admin user already exists!');
       console.log('   Email:', ADMIN_USER.email);
