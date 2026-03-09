@@ -60,8 +60,8 @@ Return ONLY the cleaned transcript text. No explanations, no preamble.`;
       console.warn('Gemini clean-transcript failed, trying NVIDIA fallback:', geminiError instanceof Error ? geminiError.message : geminiError);
     }
 
-    // 2. Fallback to NVIDIA (mistral-large for meeting notes)
-    const cleanedTranscript = await callNvidia(prompt, { model: 'mistral', temperature: 0.15 });
+    // 2. Fallback to NVIDIA (Kimi-K2 for high quality transcript editing)
+    const cleanedTranscript = await callNvidia(prompt, { model: 'kimi', temperature: 0.15 });
 
     return NextResponse.json({
       success: true,

@@ -72,14 +72,14 @@ export async function POST(request: NextRequest) {
             console.warn('Gemini generate-summary failed, trying NVIDIA fallback:', geminiError instanceof Error ? geminiError.message : geminiError);
         }
 
-        // 2. Fallback to NVIDIA (mistral-large for meeting notes)
-        const parsed = await callNvidiaJSON(prompt, { model: 'mistral', temperature: 0.15 });
+        // 2. Fallback to NVIDIA (Kimi-K2)
+        const parsed = await callNvidiaJSON(prompt, { model: 'kimi', temperature: 0.15 });
 
         return NextResponse.json({
             success: true,
             data: {
                 meetingId,
-                modelUsed: 'nvidia/mistral-large-3-675b',
+                modelUsed: 'nvidia/moonshot-kimi-k2',
                 ...parsed,
             },
         });

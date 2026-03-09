@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
         const chatHistory = messages.map((m: any) => `${m.role.toUpperCase()}: ${m.content}`).join('\n');
         const nvidiaPrompt = `${systemPrompt}\n\nCHAT HISTORY:\n${chatHistory}\n\nRespond to the last user message. Return ONLY your response text.`;
 
-        const reply = await callNvidia(nvidiaPrompt, { model: 'mistral', temperature: 0.15 });
+        const reply = await callNvidia(nvidiaPrompt, { model: 'phi-4', temperature: 0.15 });
 
         return NextResponse.json({
             success: true,

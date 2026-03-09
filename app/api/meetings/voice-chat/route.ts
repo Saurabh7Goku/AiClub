@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
+import { callNvidia } from '@/lib/ai/nvidia';
 
 const getApiKey = () => {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -11,7 +12,6 @@ const getApiKey = () => {
 
 export async function POST(request: NextRequest) {
   try {
-    const apiKey = getApiKey();
     const { question, boardContext, meetingId } = await request.json();
 
     if (!question || typeof question !== 'string') {
@@ -21,9 +21,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const ai = new GoogleGenAI({ apiKey });
-
-    // Step 1: Generate a text answer using the regular model
     const textPrompt = `You are an expert AI meeting assistant for an AI/ML Intelligence Club.
 You speak in a professional yet friendly tone. Keep responses concise (2-4 sentences max).
 
@@ -36,13 +33,31 @@ The user asks: ${question}
 
 Provide a clear, helpful, and actionable answer. If discussing technical AI/ML topics, be accurate but accessible.`;
 
-    const textResponse = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-lite',
-      contents: [{ parts: [{ text: textPrompt }] }],
-    });
+    let textReply = '';
+    let modelUsed = '';
 
-    const textReply =
-      textResponse.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    // Step 1: Generate a text answer
+    // Try Gemini first
+    try {
+      const apiKey = getApiKey();
+      const ai = new GoogleGenAI({ apiKey });
+      const textResponse = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-lite',
+        contents: [{ parts: [{ text: textPrompt }] }],
+      });
+
+      textReply = textResponse.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      modelUsed = 'gemini';
+    } catch (geminiError) {
+      console.warn('Gemini voice-chat text generation failed, trying NVIDIA fallback:', geminiError instanceof Error ? geminiError.message : geminiError);
+
+      try {
+        textReply = await callNvidia(textPrompt, { model: 'phi-4', temperature: 0.7 });
+        modelUsed = 'nvidia';
+      } catch (nvidiaError) {
+        console.error('NVIDIA fallback also failed:', nvidiaError);
+      }
+    }
 
     if (!textReply) {
       return NextResponse.json({
@@ -54,7 +69,11 @@ Provide a clear, helpful, and actionable answer. If discussing technical AI/ML t
     }
 
     // Step 2: Convert the text answer to speech using TTS model
+    // We'll only try this if we have a Gemini API key and if the previous model used was Gemini
+    // (If Gemini is 429ing, TTS will likely fail too, but we try as a courtesy)
     try {
+      const apiKey = getApiKey();
+      const ai = new GoogleGenAI({ apiKey });
       const ttsResponse = await ai.models.generateContent({
         model: 'gemini-2.5-flash-preview-tts',
         contents: [{ parts: [{ text: textReply }] }],
@@ -78,6 +97,7 @@ Provide a clear, helpful, and actionable answer. If discussing technical AI/ML t
           audioBase64: audioPart.inlineData.data,
           mimeType: audioPart.inlineData.mimeType || 'audio/L16;rate=24000',
           textReply,
+          modelUsed,
         });
       }
     } catch (ttsError) {
@@ -90,6 +110,7 @@ Provide a clear, helpful, and actionable answer. If discussing technical AI/ML t
       audioBase64: null,
       textReply,
       fallback: true,
+      modelUsed,
     });
   } catch (error) {
     console.error('Error in voice chat:', error);

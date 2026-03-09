@@ -2,13 +2,14 @@
  * Shared NVIDIA API helper for fallback text generation.
  *
  * Two models are available:
- *  - 'phi-4'  → microsoft/phi-4-mini-flash-reasoning  (feed, drafts, general)
- *  - 'mistral' → mistralai/mistral-large-3-675b-instruct-2512 (meeting notes)
+ *  - 'phi-4'  -> microsoft/phi-4-mini-flash-reasoning  (feed, drafts, general)
+ *  - 'mistral' -> mistralai/mistral-large-3-675b-instruct-2512 (meeting notes)
  */
 
 const NVIDIA_MODELS = {
     'phi-4': 'microsoft/phi-4-mini-flash-reasoning',
     'mistral': 'mistralai/mistral-large-3-675b-instruct-2512',
+    'kimi': 'moonshotai/kimi-k2-instruct-0905',
 } as const;
 
 export type NvidiaModelKey = keyof typeof NVIDIA_MODELS;
@@ -32,11 +33,19 @@ export async function callNvidia(
     prompt: string,
     options: NvidiaOptions = {},
 ): Promise<string> {
-    const apiKey = process.env.NVIDIA_API_KEY;
-    if (!apiKey) throw new Error('NVIDIA_API_KEY not configured');
-
     const modelKey = options.model ?? 'phi-4';
     const modelId = NVIDIA_MODELS[modelKey];
+
+    // Select API key based on model
+    const apiKey = modelKey === 'mistral'
+        ? process.env.NVIDIA_MISTRAL_API_KEY
+        : modelKey === 'kimi'
+            ? process.env.NVIDIA_KIMI_API_KEY
+            : process.env.NVIDIA_API_KEY;
+
+    if (!apiKey) {
+        throw new Error(`${modelKey === 'mistral' ? 'NVIDIA_MISTRAL_API_KEY' : 'NVIDIA_API_KEY'} not configured`);
+    }
 
     const payload = {
         model: modelId,
@@ -86,45 +95,69 @@ export async function callNvidiaJSON<T = any>(
 ): Promise<T> {
     const raw = await callNvidia(prompt, options);
 
-    // Stage 1: code-fenced JSON
-    const codeBlockMatch = raw.match(/```json\s?([\s\S]*?)\s?```/) || raw.match(/```\s?([\s\S]*?)\s?```/);
-    if (codeBlockMatch) {
+    // Helper: try parsing a string as JSON
+    const tryParse = (str: string): T | null => {
         try {
-            return JSON.parse(codeBlockMatch[1].trim());
-        } catch { /* continue */ }
-    }
-
-    // Stage 2: first/last brace pair
-    const firstBrace = raw.indexOf('{');
-    const lastBrace = raw.lastIndexOf('}');
-    if (firstBrace !== -1) {
-        let candidate = lastBrace > firstBrace
-            ? raw.substring(firstBrace, lastBrace + 1)
-            : raw.substring(firstBrace);
-
-        // Truncation recovery
-        if (!candidate.endsWith('}')) {
-            candidate = candidate.trim();
-            if (!candidate.endsWith(']')) candidate += '"]';
-            if (!candidate.endsWith('}')) candidate += ']}';
-        }
-
-        try {
-            return JSON.parse(candidate);
+            const cleaned = str.trim();
+            if (!cleaned) return null;
+            return JSON.parse(cleaned);
         } catch {
-            try {
-                return JSON.parse(candidate + '"]}');
-            } catch { /* continue */ }
+            return null;
+        }
+    };
+
+    // Stage 1: Look for JSON code blocks
+    const codeBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/g;
+    let cbMatch;
+    while ((cbMatch = codeBlockRegex.exec(raw)) !== null) {
+        const parsed = tryParse(cbMatch[1]);
+        if (parsed) return parsed;
+    }
+
+    // Stage 2: Look for the LARGEST brace-enclosed block (likely the main JSON)
+    const allMatches = [];
+    let start = -1;
+    let stack = 0;
+
+    for (let i = 0; i < raw.length; i++) {
+        if (raw[i] === '{') {
+            if (stack === 0) start = i;
+            stack++;
+        } else if (raw[i] === '}') {
+            stack--;
+            if (stack === 0 && start !== -1) {
+                allMatches.push(raw.substring(start, i + 1));
+            } else if (stack < 0) {
+                stack = 0; // reset on imbalance
+            }
         }
     }
 
-    // Stage 3: regex fallback
-    const jsonMatch = raw.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-        try {
-            return JSON.parse(jsonMatch[0]);
-        } catch { /* continue */ }
+    // Try parsing matches from longest to shortest
+    allMatches.sort((a, b) => b.length - a.length);
+    for (const match of allMatches) {
+        const parsed = tryParse(match);
+        if (parsed) return parsed;
     }
 
+    // Stage 3: Truncation recovery on the last promising block
+    const lastBraceStart = raw.lastIndexOf('{');
+    if (lastBraceStart !== -1) {
+        let candidate = raw.substring(lastBraceStart).trim();
+        // Basic truncation fixing (add missing braces/brackets)
+        if (!candidate.endsWith('}')) {
+            let attempt = candidate;
+            if (!attempt.endsWith('"') && !attempt.endsWith(']') && !attempt.endsWith('}')) {
+                attempt += '"';
+            }
+            if (attempt.split('[').length > attempt.split(']').length) attempt += ']';
+            if (attempt.split('{').length > attempt.split('}').length) attempt += '}';
+
+            const parsed = tryParse(attempt);
+            if (parsed) return parsed;
+        }
+    }
+
+    console.error('Failed to extract JSON from NVIDIA response. Raw content preview:', raw.substring(0, 1000) + '...');
     throw new Error(`Failed to extract JSON from NVIDIA response. Raw length: ${raw.length}`);
 }

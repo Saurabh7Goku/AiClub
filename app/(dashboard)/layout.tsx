@@ -47,8 +47,8 @@ export default function DashboardLayout({
 
       {/* Ambient Animated Background (Subtle) */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent-500/5 rounded-full blur-[100px] animate-pulse"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-primary-500/5 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute top-0 left-0 w-[40%] h-[40%] bg-accent-500/5 rounded-full blur-[100px] animate-pulse"></div>
+        <div className="absolute bottom-0 right-0 w-[30%] h-[30%] bg-primary-500/5 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '2s' }}></div>
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDUiLz4KPC9zdmc+')] opacity-20 mix-blend-overlay"></div>
       </div>
 
