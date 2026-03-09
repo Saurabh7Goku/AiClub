@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
+import { GoogleGenAI, Type } from '@google/genai';
 import OpenAI from 'openai';
 import { getUserAdmin } from '@/lib/firebase/admin-firestore';
 
@@ -8,23 +8,30 @@ const nvidiaKey = process.env.NVIDIA_API_KEY;
 
 async function matchWithGemini(user: any, unvotedIdeas: any[]) {
   if (!geminiKey) throw new Error('GEMINI_API_KEY not configured');
-  
-  const genAI = new GoogleGenerativeAI(geminiKey);
-  const model = genAI.getGenerativeModel({
+
+  const ai = new GoogleGenAI({ apiKey: geminiKey });
+
+  const prompt = `Match this user to relevant ideas.
+USER: ${user.displayName} | Expertise: ${user.profile?.expertise?.join(', ')}
+IDEAS:
+${unvotedIdeas.map(i => `- ID: ${i.id} | Title: "${i.title}"`).join('\n')}`;
+
+  const result = await ai.models.generateContent({
     model: 'gemini-2.0-flash-lite',
-    generationConfig: {
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    config: {
       responseMimeType: 'application/json',
       responseSchema: {
-        type: SchemaType.OBJECT,
+        type: Type.OBJECT,
         properties: {
           recommendations: {
-            type: SchemaType.ARRAY,
+            type: Type.ARRAY,
             items: {
-              type: SchemaType.OBJECT,
+              type: Type.OBJECT,
               properties: {
-                ideaId: { type: SchemaType.STRING },
-                reason: { type: SchemaType.STRING },
-                matchScore: { type: SchemaType.NUMBER },
+                ideaId: { type: Type.STRING },
+                reason: { type: Type.STRING },
+                matchScore: { type: Type.NUMBER },
               },
               required: ['ideaId', 'reason', 'matchScore'],
             },
@@ -35,18 +42,12 @@ async function matchWithGemini(user: any, unvotedIdeas: any[]) {
     },
   });
 
-  const prompt = `Match this user to relevant ideas.
-USER: ${user.displayName} | Expertise: ${user.profile?.expertise?.join(', ')}
-IDEAS:
-${unvotedIdeas.map(i => `- ID: ${i.id} | Title: "${i.title}"`).join('\n')}`;
-
-  const result = await model.generateContent(prompt);
-  return JSON.parse(result.response.text());
+  return JSON.parse(result.text ?? '');
 }
 
 async function matchWithNvidia(user: any, unvotedIdeas: any[]) {
   if (!nvidiaKey) throw new Error('NVIDIA_API_KEY not configured');
-  
+
   const openai = new OpenAI({
     apiKey: nvidiaKey,
     baseURL: 'https://integrate.api.nvidia.com/v1',
@@ -70,7 +71,7 @@ ${unvotedIdeas.map(i => `- ID: ${i.id} | Title: "${i.title}"`).join('\n')}`
   });
 
   const rawContent = completion.choices[0]?.message?.content || '';
-  
+
   // Clean reasoning tags
   let processedContent = rawContent.replace(/<think>[\s\S]*?<\/think>/g, '');
   processedContent = processedContent.replace(/<think>[\s\S]*/g, '');
@@ -82,17 +83,17 @@ ${unvotedIdeas.map(i => `- ID: ${i.id} | Title: "${i.title}"`).join('\n')}`
   if (codeBlockMatch) {
     try {
       return JSON.parse(codeBlockMatch[1].trim());
-    } catch (e) {}
+    } catch (e) { }
   }
 
   // STAGE 2: Look for the first/last brace pair
   const firstBrace = processedContent.indexOf('{');
   const lastBrace = processedContent.lastIndexOf('}');
   if (firstBrace !== -1) {
-    let candidate = lastBrace > firstBrace 
+    let candidate = lastBrace > firstBrace
       ? processedContent.substring(firstBrace, lastBrace + 1)
       : processedContent.substring(firstBrace);
-    
+
     // TRUNCATION RECOVERY
     if (!candidate.endsWith('}')) {
       candidate = candidate.trim();
@@ -104,9 +105,9 @@ ${unvotedIdeas.map(i => `- ID: ${i.id} | Title: "${i.title}"`).join('\n')}`
       return JSON.parse(candidate);
     } catch (e) {
       try {
-        const recovered = candidate + '"]}'; 
+        const recovered = candidate + '"]}';
         return JSON.parse(recovered);
-      } catch (e2) {}
+      } catch (e2) { }
     }
   }
 

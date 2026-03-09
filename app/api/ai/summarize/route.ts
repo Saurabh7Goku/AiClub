@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import OpenAI from 'openai';
 import { db } from '@/lib/firebase/admin';
 
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
 
     // 1. Check Cache first
     const cacheId = getCacheId(url, title);
-    
+
     // Concurrent request lock
     if (activeRequests.has(cacheId)) {
       return NextResponse.json({ success: false, error: 'Request already in progress' }, { status: 429 });
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
       } catch (e: any) {
         console.warn('Gemini 2.0 failed, trying 2.5 fallback:', e.message);
         errors.push(`Gemini 2.0: ${e.message}`);
-        
+
         try {
           result = await summarizeWithGemini(geminiKey, title, 'gemini-2.5-flash-lite', content);
         } catch (e2: any) {
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
 
     // 3. Final Fallback: If EVERYTHING else failed but Nvidia hasn't been re-tried (unlikely in this flow)
     // or if we want to ensure we tried every possible route.
-    
+
     activeRequests.delete(cacheId);
 
     if (!result) {
@@ -144,17 +144,17 @@ Respond ONLY with a JSON object: {"bullets": ["bullet 1", "bullet 2", "bullet 3"
     });
 
     let rawContent = completion.choices[0]?.message?.content || '';
-    
+
     // Robustly strip <think> blocks and dangling tags
     rawContent = rawContent.replace(/<think>[\s\S]*?<\/think>/g, '');
     rawContent = rawContent.replace(/<\/?think>/g, '');
-    
+
     let bullets: string[] = [];
-    
+
     // Attempt to extract JSON array from content
     // Models sometimes wrap JSON in a string like: {"bullets": ["..."]}
     const jsonMatch = rawContent.match(/\{[\s\S]*"bullets"[\s\S]*\}/);
-    
+
     if (jsonMatch) {
       try {
         const parsed = JSON.parse(jsonMatch[0]);
@@ -205,16 +205,19 @@ Respond ONLY with a JSON object: {"bullets": ["bullet 1", "bullet 2", "bullet 3"
 
 async function summarizeWithGemini(apiKey: string, title: string, modelName: string, content?: string) {
   try {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: modelName });
+    const ai = new GoogleGenAI({ apiKey });
 
-    const prompt = `Summarize this AI/ML article in exactly 3 bullet points. 
+    const prompt = `Summarize this article in exactly 3 bullet points. 
 Title: ${title}
 ${content ? `Content: ${content}` : ''}
 Return ONLY a JSON object: {"bullets": ["bullet 1", "bullet 2", "bullet 3"]}`;
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const result = await ai.models.generateContent({
+      model: modelName,
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    });
+
+    const text = result.text ?? '';
 
     let bullets: string[] = [];
     const jsonMatch = text.match(/\{[\s\S]*"bullets"[\s\S]*\}/);
@@ -236,8 +239,3 @@ Return ONLY a JSON object: {"bullets": ["bullet 1", "bullet 2", "bullet 3"]}`;
     throw e;
   }
 }
-
-
-
-
-

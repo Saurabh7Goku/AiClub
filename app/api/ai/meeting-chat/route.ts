@@ -1,88 +1,345 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { callNvidia } from '@/lib/ai/nvidia';
+import { GoogleGenAI, Type } from '@google/genai';
+import { AIDraft, FeasibilityNotes } from '@/types';
+import { callNvidiaJSON } from '@/lib/ai/nvidia';
 
-const getApiKey = () => {
+// Initialize Gemini
+const getGeminiClient = () => {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey || apiKey === 'your_gemini_api_key_here') {
         throw new Error('GEMINI_API_KEY is not configured');
     }
-    return apiKey;
+    return new GoogleGenAI({ apiKey });
 };
 
-export async function POST(request: NextRequest) {
+// Schema for structured AI draft output
+const aiDraftSchema = {
+    type: Type.OBJECT,
+    properties: {
+        refinedDescription: {
+            type: Type.STRING,
+            description: 'A refined and expanded description of the idea',
+        },
+        architectureOutline: {
+            type: Type.STRING,
+            description: 'High-level technical architecture outline for implementing this idea',
+        },
+        discussionAgenda: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING },
+            description: 'List of discussion points for the meeting',
+        },
+        feasibilityNotes: {
+            type: Type.OBJECT,
+            properties: {
+                technical: {
+                    type: Type.STRING,
+                    description: 'Technical feasibility assessment',
+                },
+                operational: {
+                    type: Type.STRING,
+                    description: 'Operational feasibility assessment',
+                },
+                risks: {
+                    type: Type.ARRAY,
+                    items: { type: Type.STRING },
+                    description: 'List of potential risks and mitigations',
+                },
+            },
+            required: ['technical', 'operational', 'risks'],
+        },
+        nextSteps: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING },
+            description: 'Recommended next steps for implementation',
+        },
+    },
+    required: ['refinedDescription', 'architectureOutline', 'discussionAgenda', 'feasibilityNotes', 'nextSteps'],
+};
+
+// Schema for meeting agenda
+const meetingAgendaSchema = {
+    type: Type.OBJECT,
+    properties: {
+        agenda: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING },
+            description: 'Ordered list of agenda items for the meeting',
+        },
+        discussionPoints: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING },
+            description: 'Key points to discuss for each agenda item',
+        },
+        decisionPoints: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING },
+            description: 'Decisions that need to be made during the meeting',
+        },
+        timeAllocation: {
+            type: Type.ARRAY,
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    item: { type: Type.STRING },
+                    minutes: { type: Type.NUMBER },
+                },
+            },
+            description: 'Suggested time allocation for each agenda item',
+        },
+    },
+    required: ['agenda', 'discussionPoints', 'decisionPoints', 'timeAllocation'],
+};
+
+export interface MeetingAgendaOutput {
+    agenda: string[];
+    discussionPoints: string[];
+    decisionPoints: string[];
+    timeAllocation: { item: string; minutes: number }[];
+}
+
+export interface AIGenerationResult<T> {
+    success: boolean;
+    data?: T;
+    error?: string;
+}
+
+// Generate AI draft for an idea
+export async function generateAIDraft(
+    ideaTitle: string,
+    problemStatement: string,
+    proposedAiUsage: string,
+    category: string
+): Promise<AIGenerationResult<Omit<AIDraft, 'id' | 'ideaId' | 'generatedAt'>>> {
     try {
-        const { messages, boardContext, meetingId } = await request.json();
+        const ai = getGeminiClient();
 
-        if (!messages || !Array.isArray(messages)) {
-            return NextResponse.json({ success: false, error: 'messages array is required' }, { status: 400 });
-        }
+        const prompt = `You are an AI/ML technical architect reviewing an idea submission for an AI/ML Intelligence Club.
 
-        const systemPrompt = `You are an AI meeting assistant for an AI/ML Intelligence Club. 
-        Your persona is friendly and helpful. You have a Hinglish personality, meaning you can intermix Hindi and English naturally if the user does, but stay professional.
-        
-        Current meeting context from the collaborative board:
-        """
-        ${boardContext || 'The board is currently empty.'}
-        """
+Idea Title: ${ideaTitle}
+Category: ${category}
+Problem Statement: ${problemStatement}
+Proposed AI Usage: ${proposedAiUsage}
 
-        Guidelines:
-        - Use the board context to provide relevant answers.
-        - If discussing technical AI/ML topics, be accurate.
-        - Encourage collaboration.
-        - Your name is "AI Meeting Assistant".`;
+Please analyze this idea and provide:
+1. A refined description that clarifies and expands on the original idea
+2. A high-level technical architecture outline for implementation
+3. A discussion agenda for team review
+4. Feasibility notes covering technical viability, operational considerations, and potential risks
+5. Recommended next steps
 
-        const lastMessage = messages[messages.length - 1].content;
+Be specific, practical, and actionable. Consider current AI/ML best practices and available technologies.`;
 
-        // 1. Try Gemini first
-        try {
-            const apiKey = getApiKey();
-            const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({
-                model: 'gemini-2.5-flash-lite',
-                systemInstruction: systemPrompt,
-            });
-
-            // Format history for Gemini — skip leading model messages
-            const rawHistory = messages.slice(0, -1).map((m: any) => ({
-                role: m.role === 'user' ? 'user' : 'model',
-                parts: [{ text: m.content }],
-            }));
-
-            let startIdx = 0;
-            while (startIdx < rawHistory.length && rawHistory[startIdx].role === 'model') {
-                startIdx++;
-            }
-            const history = rawHistory.slice(startIdx);
-
-            const chat = model.startChat({ history });
-            const result = await chat.sendMessage(lastMessage);
-            const response = await result.response;
-            const reply = response.text();
-
-            return NextResponse.json({
-                success: true,
-                reply: reply,
-            });
-        } catch (geminiError) {
-            console.warn('Gemini meeting-chat failed, trying NVIDIA fallback:', geminiError instanceof Error ? geminiError.message : geminiError);
-        }
-
-        // 2. Fallback to NVIDIA (mistral-large for meeting notes)
-        const chatHistory = messages.map((m: any) => `${m.role.toUpperCase()}: ${m.content}`).join('\n');
-        const nvidiaPrompt = `${systemPrompt}\n\nCHAT HISTORY:\n${chatHistory}\n\nRespond to the last user message. Return ONLY your response text.`;
-
-        const reply = await callNvidia(nvidiaPrompt, { model: 'phi-4', temperature: 0.15 });
-
-        return NextResponse.json({
-            success: true,
-            reply: reply,
+        const result = await ai.models.generateContent({
+            model: 'gemini-2.0-flash-lite',
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: aiDraftSchema,
+            },
         });
-    } catch (error) {
-        console.error('Error in AI meeting chat:', error);
-        return NextResponse.json(
-            { success: false, error: error instanceof Error ? error.message : 'Internal server error' },
-            { status: 500 }
-        );
+
+        const text = result.text ?? '';
+        const parsed = JSON.parse(text) as {
+            refinedDescription: string;
+            architectureOutline: string;
+            discussionAgenda: string[];
+            feasibilityNotes: FeasibilityNotes;
+            nextSteps: string[];
+        };
+
+        return {
+            success: true,
+            data: {
+                refinedDescription: parsed.refinedDescription,
+                architectureOutline: parsed.architectureOutline,
+                discussionAgenda: parsed.discussionAgenda,
+                feasibilityNotes: parsed.feasibilityNotes,
+                nextSteps: parsed.nextSteps,
+                modelUsed: 'gemini-2.0-flash-lite',
+                status: 'success',
+            },
+        };
+    } catch (geminiError) {
+        console.warn('Gemini AI draft failed, trying NVIDIA fallback:', geminiError instanceof Error ? geminiError.message : geminiError);
+
+        // NVIDIA fallback
+        try {
+            const nvidiaPrompt = `You are an AI/ML technical architect reviewing an idea submission for an AI/ML Intelligence Club.
+
+Idea Title: ${ideaTitle}
+Category: ${category}
+Problem Statement: ${problemStatement}
+Proposed AI Usage: ${proposedAiUsage}
+
+Please analyze this idea and respond ONLY with a JSON object with these exact keys:
+{"refinedDescription": "...", "architectureOutline": "...", "discussionAgenda": ["..."], "feasibilityNotes": {"technical": "...", "operational": "...", "risks": ["..."]}, "nextSteps": ["..."]}
+
+Be specific, practical, and actionable.`;
+
+            const parsed = await callNvidiaJSON<{
+                refinedDescription: string;
+                architectureOutline: string;
+                discussionAgenda: string[];
+                feasibilityNotes: FeasibilityNotes;
+                nextSteps: string[];
+            }>(nvidiaPrompt, { model: 'phi-4', temperature: 0.6 });
+
+            return {
+                success: true,
+                data: {
+                    refinedDescription: parsed.refinedDescription,
+                    architectureOutline: parsed.architectureOutline,
+                    discussionAgenda: parsed.discussionAgenda,
+                    feasibilityNotes: parsed.feasibilityNotes,
+                    nextSteps: parsed.nextSteps,
+                    modelUsed: 'nvidia/phi-4-mini-flash-reasoning',
+                    status: 'success',
+                },
+            };
+        } catch (nvidiaError) {
+            console.error('NVIDIA AI draft fallback also failed:', nvidiaError);
+            return {
+                success: false,
+                error: `Gemini: ${geminiError instanceof Error ? geminiError.message : 'unknown'} | NVIDIA: ${nvidiaError instanceof Error ? nvidiaError.message : 'unknown'}`,
+            };
+        }
     }
+}
+
+// Generate meeting agenda for an idea
+export async function generateMeetingAgenda(
+    ideaTitle: string,
+    problemStatement: string,
+    refinedDescription: string,
+    feasibilityNotes: FeasibilityNotes
+): Promise<AIGenerationResult<MeetingAgendaOutput>> {
+    try {
+        const ai = getGeminiClient();
+
+        const prompt = `You are organizing a meeting to review an AI/ML idea for an Intelligence Club.
+
+Idea Title: ${ideaTitle}
+Problem Statement: ${problemStatement}
+Refined Description: ${refinedDescription}
+
+Technical Feasibility: ${feasibilityNotes.technical}
+Operational Feasibility: ${feasibilityNotes.operational}
+Known Risks: ${feasibilityNotes.risks.join(', ')}
+
+Create a structured meeting agenda that:
+1. Covers all important aspects of the idea
+2. Addresses the feasibility concerns
+3. Leads to clear decisions
+4. Is realistic for a 60-minute meeting
+
+Provide a well-organized agenda with discussion points and decision points.`;
+
+        const result = await ai.models.generateContent({
+            model: 'gemini-2.0-flash-lite',
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: meetingAgendaSchema,
+            },
+        });
+
+        const text = result.text ?? '';
+        const parsed = JSON.parse(text) as MeetingAgendaOutput;
+
+        return {
+            success: true,
+            data: parsed,
+        };
+    } catch (geminiError) {
+        console.warn('Gemini meeting agenda failed, trying NVIDIA fallback:', geminiError instanceof Error ? geminiError.message : geminiError);
+
+        try {
+            const nvidiaPrompt = `You are organizing a meeting to review an AI/ML idea for an Intelligence Club.
+
+Idea Title: ${ideaTitle}
+Problem Statement: ${problemStatement}
+Refined Description: ${refinedDescription}
+Technical Feasibility: ${feasibilityNotes.technical}
+Operational Feasibility: ${feasibilityNotes.operational}
+Known Risks: ${feasibilityNotes.risks.join(', ')}
+
+Create a structured meeting agenda. Respond ONLY with JSON:
+{"agenda": ["..."], "discussionPoints": ["..."], "decisionPoints": ["..."], "timeAllocation": [{"item": "...", "minutes": 10}]}
+
+Make it realistic for a 60-minute meeting.`;
+
+            const parsed = await callNvidiaJSON<MeetingAgendaOutput>(nvidiaPrompt, { model: 'phi-4', temperature: 0.6 });
+
+            return {
+                success: true,
+                data: parsed,
+            };
+        } catch (nvidiaError) {
+            console.error('NVIDIA meeting agenda fallback also failed:', nvidiaError);
+            return {
+                success: false,
+                error: `Gemini: ${geminiError instanceof Error ? geminiError.message : 'unknown'} | NVIDIA: ${nvidiaError instanceof Error ? nvidiaError.message : 'unknown'}`,
+            };
+        }
+    }
+}
+
+// Summarize tech article
+export async function summarizeTechArticle(
+    title: string,
+    content: string
+): Promise<AIGenerationResult<string>> {
+    try {
+        const ai = getGeminiClient();
+
+        const prompt = `Summarize the following AI/ML technology article in 2-3 sentences. Focus on the key innovation or update.
+
+Title: ${title}
+Content: ${content}
+
+Provide a concise summary suitable for a tech feed display.`;
+
+        const result = await ai.models.generateContent({
+            model: 'gemini-2.0-flash-lite',
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        });
+
+        const summary = result.text ?? '';
+
+        return {
+            success: true,
+            data: summary,
+        };
+    } catch (geminiError) {
+        console.warn('Gemini article summary failed, trying NVIDIA fallback:', geminiError instanceof Error ? geminiError.message : geminiError);
+
+        try {
+            const { callNvidia } = await import('@/lib/ai/nvidia');
+            const nvidiaPrompt = `Summarize the following AI/ML technology article in 2-3 sentences. Focus on the key innovation or update.
+
+Title: ${title}
+Content: ${content}
+
+Provide a concise summary suitable for a tech feed display. Return ONLY the summary text, no JSON.`;
+
+            const summary = await callNvidia(nvidiaPrompt, { model: 'phi-4', temperature: 0.7 });
+
+            return {
+                success: true,
+                data: summary,
+            };
+        } catch (nvidiaError) {
+            console.error('NVIDIA article summary fallback also failed:', nvidiaError);
+            return {
+                success: false,
+                error: `Gemini: ${geminiError instanceof Error ? geminiError.message : 'unknown'} | NVIDIA: ${nvidiaError instanceof Error ? nvidiaError.message : 'unknown'}`,
+            };
+        }
+    }
+}
+
+// Check if AI is configured
+export function isAIConfigured(): boolean {
+    const apiKey = process.env.GEMINI_API_KEY;
+    return !!apiKey && apiKey !== 'your_gemini_api_key_here';
 }

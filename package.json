@@ -11,10 +11,8 @@
   },
   "dependencies": {
     "@google/genai": "^1.43.0",
-    "@google/generative-ai": "^0.24.1",
     "@heroicons/react": "^2.2.0",
     "date-fns": "^3.6.0",
-    "dotenv": "^17.3.1",
     "firebase": "^10.12.2",
     "firebase-admin": "^12.1.1",
     "framer-motion": "^12.34.3",
@@ -40,6 +38,7 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.19",
+    "dotenv": "^17.3.1",
     "eslint": "^8.57.0",
     "eslint-config-next": "14.2.3",
     "postcss": "^8.4.38",

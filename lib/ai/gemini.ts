@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI, SchemaType, ResponseSchema } from '@google/generative-ai';
+import { GoogleGenAI, Type } from '@google/genai';
 import { AIDraft, FeasibilityNotes } from '@/types';
 import { callNvidiaJSON } from './nvidia';
 
@@ -8,48 +8,48 @@ const getGeminiClient = () => {
   if (!apiKey || apiKey === 'your_gemini_api_key_here') {
     throw new Error('GEMINI_API_KEY is not configured');
   }
-  return new GoogleGenerativeAI(apiKey);
+  return new GoogleGenAI({ apiKey });
 };
 
 // Schema for structured AI draft output
-const aiDraftSchema: ResponseSchema = {
-  type: SchemaType.OBJECT,
+const aiDraftSchema = {
+  type: Type.OBJECT,
   properties: {
     refinedDescription: {
-      type: SchemaType.STRING,
+      type: Type.STRING,
       description: 'A refined and expanded description of the idea',
     },
     architectureOutline: {
-      type: SchemaType.STRING,
+      type: Type.STRING,
       description: 'High-level technical architecture outline for implementing this idea',
     },
     discussionAgenda: {
-      type: SchemaType.ARRAY,
-      items: { type: SchemaType.STRING },
+      type: Type.ARRAY,
+      items: { type: Type.STRING },
       description: 'List of discussion points for the meeting',
     },
     feasibilityNotes: {
-      type: SchemaType.OBJECT,
+      type: Type.OBJECT,
       properties: {
         technical: {
-          type: SchemaType.STRING,
+          type: Type.STRING,
           description: 'Technical feasibility assessment',
         },
         operational: {
-          type: SchemaType.STRING,
+          type: Type.STRING,
           description: 'Operational feasibility assessment',
         },
         risks: {
-          type: SchemaType.ARRAY,
-          items: { type: SchemaType.STRING },
+          type: Type.ARRAY,
+          items: { type: Type.STRING },
           description: 'List of potential risks and mitigations',
         },
       },
       required: ['technical', 'operational', 'risks'],
     },
     nextSteps: {
-      type: SchemaType.ARRAY,
-      items: { type: SchemaType.STRING },
+      type: Type.ARRAY,
+      items: { type: Type.STRING },
       description: 'Recommended next steps for implementation',
     },
   },
@@ -57,31 +57,31 @@ const aiDraftSchema: ResponseSchema = {
 };
 
 // Schema for meeting agenda
-const meetingAgendaSchema: ResponseSchema = {
-  type: SchemaType.OBJECT,
+const meetingAgendaSchema = {
+  type: Type.OBJECT,
   properties: {
     agenda: {
-      type: SchemaType.ARRAY,
-      items: { type: SchemaType.STRING },
+      type: Type.ARRAY,
+      items: { type: Type.STRING },
       description: 'Ordered list of agenda items for the meeting',
     },
     discussionPoints: {
-      type: SchemaType.ARRAY,
-      items: { type: SchemaType.STRING },
+      type: Type.ARRAY,
+      items: { type: Type.STRING },
       description: 'Key points to discuss for each agenda item',
     },
     decisionPoints: {
-      type: SchemaType.ARRAY,
-      items: { type: SchemaType.STRING },
+      type: Type.ARRAY,
+      items: { type: Type.STRING },
       description: 'Decisions that need to be made during the meeting',
     },
     timeAllocation: {
-      type: SchemaType.ARRAY,
+      type: Type.ARRAY,
       items: {
-        type: SchemaType.OBJECT,
+        type: Type.OBJECT,
         properties: {
-          item: { type: SchemaType.STRING },
-          minutes: { type: SchemaType.NUMBER },
+          item: { type: Type.STRING },
+          minutes: { type: Type.NUMBER },
         },
       },
       description: 'Suggested time allocation for each agenda item',
@@ -111,15 +111,7 @@ export async function generateAIDraft(
   category: string
 ): Promise<AIGenerationResult<Omit<AIDraft, 'id' | 'ideaId' | 'generatedAt'>>> {
   try {
-    const genAI = getGeminiClient();
-
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash-lite',
-      generationConfig: {
-        responseMimeType: 'application/json',
-        responseSchema: aiDraftSchema,
-      },
-    });
+    const ai = getGeminiClient();
 
     const prompt = `You are an AI/ML technical architect reviewing an idea submission for an AI/ML Intelligence Club.
 
@@ -137,10 +129,16 @@ Please analyze this idea and provide:
 
 Be specific, practical, and actionable. Consider current AI/ML best practices and available technologies.`;
 
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const text = response.text();
+    const result = await ai.models.generateContent({
+      model: 'gemini-2.0-flash-lite',
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: aiDraftSchema,
+      },
+    });
 
+    const text = result.text ?? '';
     const parsed = JSON.parse(text) as {
       refinedDescription: string;
       architectureOutline: string;
@@ -216,15 +214,7 @@ export async function generateMeetingAgenda(
   feasibilityNotes: FeasibilityNotes
 ): Promise<AIGenerationResult<MeetingAgendaOutput>> {
   try {
-    const genAI = getGeminiClient();
-
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash-lite',
-      generationConfig: {
-        responseMimeType: 'application/json',
-        responseSchema: meetingAgendaSchema,
-      },
-    });
+    const ai = getGeminiClient();
 
     const prompt = `You are organizing a meeting to review an AI/ML idea for an Intelligence Club.
 
@@ -244,10 +234,16 @@ Create a structured meeting agenda that:
 
 Provide a well-organized agenda with discussion points and decision points.`;
 
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const text = response.text();
+    const result = await ai.models.generateContent({
+      model: 'gemini-2.0-flash-lite',
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: meetingAgendaSchema,
+      },
+    });
 
+    const text = result.text ?? '';
     const parsed = JSON.parse(text) as MeetingAgendaOutput;
 
     return {
@@ -294,11 +290,7 @@ export async function summarizeTechArticle(
   content: string
 ): Promise<AIGenerationResult<string>> {
   try {
-    const genAI = getGeminiClient();
-
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash-lite',
-    });
+    const ai = getGeminiClient();
 
     const prompt = `Summarize the following AI/ML technology article in 2-3 sentences. Focus on the key innovation or update.
 
@@ -307,9 +299,12 @@ Content: ${content}
 
 Provide a concise summary suitable for a tech feed display.`;
 
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const summary = response.text();
+    const result = await ai.models.generateContent({
+      model: 'gemini-2.0-flash-lite',
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    });
+
+    const summary = result.text ?? '';
 
     return {
       success: true,

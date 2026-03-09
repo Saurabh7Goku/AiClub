@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import { callNvidia } from '@/lib/ai/nvidia';
 
 const getApiKey = () => {
@@ -43,13 +43,14 @@ Return ONLY the cleaned transcript text. No explanations, no preamble.`;
     // 1. Try Gemini first
     try {
       const apiKey = getApiKey();
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({
+      const ai = new GoogleGenAI({ apiKey });
+
+      const result = await ai.models.generateContent({
         model: 'gemini-2.5-flash-lite',
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
       });
 
-      const result = await model.generateContent(prompt);
-      const cleanedTranscript = result.response.text();
+      const cleanedTranscript = result.text ?? '';
 
       return NextResponse.json({
         success: true,

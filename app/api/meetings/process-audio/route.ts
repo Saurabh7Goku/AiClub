@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI, SchemaType, type ResponseSchema } from '@google/generative-ai';
-import { GoogleAIFileManager } from '@google/generative-ai/server';
+import { GoogleGenAI, Type } from '@google/genai';
 import { callNvidiaJSON } from '@/lib/ai/nvidia';
 
 const getApiKey = () => {
@@ -11,15 +10,15 @@ const getApiKey = () => {
   return apiKey;
 };
 
-const meetingOutputSchema: ResponseSchema = {
-  type: SchemaType.OBJECT,
+const meetingOutputSchema = {
+  type: Type.OBJECT,
   properties: {
-    transcript: { type: SchemaType.STRING, description: "A transcript of the audio, if any" },
-    summaryNotes: { type: SchemaType.STRING, description: "Detailed summary of the meeting, encompassing audio, whiteboard notes and drawings" },
-    implementationPlan: { type: SchemaType.STRING, description: "A short implementation plan based on the discussion" },
-    futureAgenda: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING }, description: "Suggested agenda items for the next meeting" },
-    futureScopes: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING }, description: "Future scopes or big picture goals identified" },
-    promises: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING }, description: "Action items or promises made by participants" },
+    transcript: { type: Type.STRING, description: "A transcript of the audio, if any" },
+    summaryNotes: { type: Type.STRING, description: "Detailed summary of the meeting, encompassing audio, whiteboard notes and drawings" },
+    implementationPlan: { type: Type.STRING, description: "A short implementation plan based on the discussion" },
+    futureAgenda: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Suggested agenda items for the next meeting" },
+    futureScopes: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Future scopes or big picture goals identified" },
+    promises: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Action items or promises made by participants" },
   },
   required: ['transcript', 'summaryNotes', 'implementationPlan', 'futureAgenda', 'futureScopes', 'promises'],
 };
@@ -61,38 +60,43 @@ Return ONLY valid JSON matching this schema: {"transcript": "...", "summaryNotes
     // 1. Try Gemini first
     try {
       const apiKey = getApiKey();
-      let upload: any = null;
+      const ai = new GoogleGenAI({ apiKey });
+
+      let uploadUri: string | null = null;
+      let audioMimeType = 'audio/webm';
+
       if (audio && audio instanceof File) {
-        const ab = await audio.arrayBuffer();
-        const buf = Buffer.from(ab);
-        const fileManager = new GoogleAIFileManager(apiKey);
-        upload = await fileManager.uploadFile(buf, {
-          mimeType: audio.type || 'audio/webm',
-          displayName: `meeting_${meetingId}.webm`,
+        audioMimeType = audio.type || 'audio/webm';
+        const upload = await ai.files.upload({
+          file: audio,
+          config: {
+            mimeType: audioMimeType,
+            displayName: `meeting_${meetingId}.webm`,
+          },
+        });
+        uploadUri = upload.uri!;
+      }
+
+      const parts: any[] = [{ text: prompt }];
+      if (uploadUri) {
+        parts.push({
+          fileData: {
+            mimeType: audioMimeType,
+            fileUri: uploadUri,
+          },
         });
       }
 
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({
+      const result = await ai.models.generateContent({
         model: 'gemini-2.5-flash-lite',
-        generationConfig: {
+        contents: [{ role: 'user', parts }],
+        config: {
           responseMimeType: 'application/json',
           responseSchema: meetingOutputSchema,
         },
       });
 
-      const requestPayload: any[] = [{ text: prompt }];
-      if (upload) {
-        requestPayload.push({
-          fileData: {
-            mimeType: audio instanceof File ? audio.type || 'audio/webm' : 'audio/webm',
-            fileUri: upload.file.uri,
-          },
-        });
-      }
-
-      const result = await model.generateContent(requestPayload);
-      const text = result.response.text();
+      const text = result.text ?? '';
       const parsed = JSON.parse(text);
 
       return NextResponse.json({

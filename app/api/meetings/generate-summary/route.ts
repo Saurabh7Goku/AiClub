@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI, SchemaType, type ResponseSchema } from '@google/generative-ai';
+import { GoogleGenAI, Type } from '@google/genai';
 import { callNvidiaJSON } from '@/lib/ai/nvidia';
 
 const getApiKey = () => {
@@ -10,14 +10,14 @@ const getApiKey = () => {
     return apiKey;
 };
 
-const meetingOutputSchema: ResponseSchema = {
-    type: SchemaType.OBJECT,
+const meetingOutputSchema = {
+    type: Type.OBJECT,
     properties: {
-        summary: { type: SchemaType.STRING },
-        decisions: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
-        actionItems: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
-        implementationPlan: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
-        instructions: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+        summary: { type: Type.STRING },
+        decisions: { type: Type.ARRAY, items: { type: Type.STRING } },
+        actionItems: { type: Type.ARRAY, items: { type: Type.STRING } },
+        implementationPlan: { type: Type.ARRAY, items: { type: Type.STRING } },
+        instructions: { type: Type.ARRAY, items: { type: Type.STRING } },
     },
     required: ['summary', 'decisions', 'actionItems', 'implementationPlan', 'instructions'],
 };
@@ -47,17 +47,18 @@ export async function POST(request: NextRequest) {
         // 1. Try Gemini first
         try {
             const apiKey = getApiKey();
-            const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({
+            const ai = new GoogleGenAI({ apiKey });
+
+            const result = await ai.models.generateContent({
                 model: 'gemini-2.5-flash-lite',
-                generationConfig: {
+                contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                config: {
                     responseMimeType: 'application/json',
                     responseSchema: meetingOutputSchema,
                 },
             });
 
-            const result = await model.generateContent(prompt);
-            const text = result.response.text();
+            const text = result.text ?? '';
             const parsed = JSON.parse(text);
 
             return NextResponse.json({

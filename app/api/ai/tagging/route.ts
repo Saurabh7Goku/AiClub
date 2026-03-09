@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
+import { GoogleGenAI, Type } from '@google/genai';
 import OpenAI from 'openai';
 import fs from 'fs';
 import path from 'path';
@@ -9,7 +9,7 @@ const geminiKey = process.env.GEMINI_API_KEY;
 
 async function tagWithNvidia(title: string, problemStatement: string, proposedAiUsage: string, category: string) {
   if (!nvidiaKey) throw new Error('NVIDIA_API_KEY not configured');
-  
+
   const openai = new OpenAI({
     apiKey: nvidiaKey,
     baseURL: 'https://integrate.api.nvidia.com/v1',
@@ -33,7 +33,7 @@ AI Usage: ${proposedAiUsage}`
   });
 
   const rawContent = completion.choices[0]?.message?.content || '';
-  
+
   // LOG TO FILE FOR DEBUGGING
   try {
     const tmpDir = path.join(process.cwd(), 'tmp');
@@ -49,7 +49,7 @@ AI Usage: ${proposedAiUsage}`
   // Clean reasoning tags that Phi-4-mini might produce
   // Handle both completed and uncompleted tags
   let processedContent = rawContent.replace(/<think>[\s\S]*?<\/think>/g, '');
-  processedContent = processedContent.replace(/<think>[\s\S]*/g, ''); 
+  processedContent = processedContent.replace(/<think>[\s\S]*/g, '');
   processedContent = processedContent.replace(/<\/think>/g, '');
   processedContent = processedContent.trim();
 
@@ -58,17 +58,17 @@ AI Usage: ${proposedAiUsage}`
   if (codeBlockMatch) {
     try {
       return JSON.parse(codeBlockMatch[1].trim());
-    } catch (e) {}
+    } catch (e) { }
   }
 
   // STAGE 2: Look for the first/last brace pair
   const firstBrace = processedContent.indexOf('{');
   const lastBrace = processedContent.lastIndexOf('}');
   if (firstBrace !== -1) {
-    let candidate = lastBrace > firstBrace 
+    let candidate = lastBrace > firstBrace
       ? processedContent.substring(firstBrace, lastBrace + 1)
       : processedContent.substring(firstBrace);
-    
+
     // TRUNCATION RECOVERY: If it looks like it ended prematurely, try to close it
     if (!candidate.endsWith('}')) {
       // Very basic attempt: just add the closing braces
@@ -84,9 +84,9 @@ AI Usage: ${proposedAiUsage}`
       // If it still fails, try a very messy recovery
       try {
         // Just force close everything
-        const recovered = candidate + '"]}'; 
+        const recovered = candidate + '"]}}';
         return JSON.parse(recovered);
-      } catch (e2) {}
+      } catch (e2) { }
     }
   }
 
@@ -95,7 +95,7 @@ AI Usage: ${proposedAiUsage}`
   if (jsonMatch) {
     try {
       return JSON.parse(jsonMatch[0]);
-    } catch (e) {}
+    } catch (e) { }
   }
 
   throw new Error(`Failed to extract JSON from Nvidia response. Raw length: ${rawContent.length}`);
@@ -103,31 +103,32 @@ AI Usage: ${proposedAiUsage}`
 
 async function tagWithGemini(title: string, problemStatement: string, proposedAiUsage: string, category: string) {
   if (!geminiKey) throw new Error('GEMINI_API_KEY not configured');
-  
-  const genAI = new GoogleGenerativeAI(geminiKey);
-  const model = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash-lite',
-    generationConfig: {
-      responseMimeType: 'application/json',
-      responseSchema: {
-        type: SchemaType.OBJECT,
-        properties: {
-          tags: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
-          suggestedCategory: { type: SchemaType.STRING },
-          similarityKeywords: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
-        },
-        required: ['tags', 'suggestedCategory', 'similarityKeywords'],
-      },
-    },
-  });
+
+  const ai = new GoogleGenAI({ apiKey: geminiKey });
 
   const prompt = `Analyze this idea and return JSON with tags, suggestedCategory, and similarityKeywords.
 Title: ${title}
 Problem: ${problemStatement}
 AI Usage: ${proposedAiUsage}`;
 
-  const result = await model.generateContent(prompt);
-  return JSON.parse(result.response.text());
+  const result = await ai.models.generateContent({
+    model: 'gemini-2.0-flash-lite',
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    config: {
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          tags: { type: Type.ARRAY, items: { type: Type.STRING } },
+          suggestedCategory: { type: Type.STRING },
+          similarityKeywords: { type: Type.ARRAY, items: { type: Type.STRING } },
+        },
+        required: ['tags', 'suggestedCategory', 'similarityKeywords'],
+      },
+    },
+  });
+
+  return JSON.parse(result.text ?? '');
 }
 
 export async function POST(req: NextRequest) {

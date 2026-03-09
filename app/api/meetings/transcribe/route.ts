@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { GoogleAIFileManager } from '@google/generative-ai/server';
+import { GoogleGenAI } from '@google/genai';
 
 const getApiKey = () => {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -13,6 +12,7 @@ const getApiKey = () => {
 export async function POST(request: NextRequest) {
     try {
         const apiKey = getApiKey();
+        const ai = new GoogleGenAI({ apiKey });
 
         const form = await request.formData();
         const meetingId = form.get('meetingId');
@@ -26,33 +26,38 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: false, error: 'audio file is required' }, { status: 400 });
         }
 
-        const ab = await audio.arrayBuffer();
-        const buf = Buffer.from(ab);
-
-        const fileManager = new GoogleAIFileManager(apiKey);
-        const upload = await fileManager.uploadFile(buf, {
-            mimeType: audio.type || 'audio/webm',
-            displayName: `meeting_raw_${meetingId}.webm`,
+        // Upload the audio file using the new SDK
+        const upload = await ai.files.upload({
+            file: audio,
+            config: {
+                mimeType: audio.type || 'audio/webm',
+                displayName: `meeting_raw_${meetingId}.webm`,
+            },
         });
-
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
 
         const prompt = `You are an AI meeting transcriber. Transcribe the provided audio exactly as it is spoken. 
     Maintain speaker turns if identifiable, but prioritize accuracy of every word.
     Return ONLY the raw transcript text.`;
 
-        const result = await model.generateContent([
-            { text: prompt },
-            {
-                fileData: {
-                    mimeType: audio.type || 'audio/webm',
-                    fileUri: upload.file.uri,
+        const result = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-lite',
+            contents: [
+                {
+                    role: 'user',
+                    parts: [
+                        { text: prompt },
+                        {
+                            fileData: {
+                                mimeType: audio.type || 'audio/webm',
+                                fileUri: upload.uri!,
+                            },
+                        },
+                    ],
                 },
-            },
-        ]);
+            ],
+        });
 
-        const transcript = result.response.text();
+        const transcript = result.text ?? '';
 
         return NextResponse.json({
             success: true,
