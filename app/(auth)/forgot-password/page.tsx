@@ -85,10 +85,11 @@ export default function ForgotPasswordPage() {
 
                         <div className="mb-8 text-center">
                             <div className="flex justify-center mb-6">
-                                <div className="relative w-12 h-12 rounded-2xl bg-black border border-white/10 flex items-center justify-center shadow-2xl overflow-hidden">
-                                    <div className="absolute inset-0 bg-accent-500/20"></div>
-                                    <span className="text-transparent bg-clip-text bg-gradient-to-br from-accent-400 to-accent-600 font-bold text-xl tracking-tighter relative z-10">AI</span>
-                                </div>
+                                <img
+                                    src="/logo.png"
+                                    alt="AiClub Logo"
+                                    className="w-12 h-12 object-contain shadow-2xl"
+                                />
                             </div>
                             <h2 className="text-3xl font-bold text-white tracking-tight">Recover Access</h2>
                             <p className="text-gray-400 mt-2 text-sm font-medium">Enter your email to receive a password reset link.</p>

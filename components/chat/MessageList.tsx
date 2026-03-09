@@ -14,7 +14,6 @@ export default function MessageList({ messages, currentUserId, onReplyClick }: M
     const bottomRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        // Scroll to bottom when messages change, using a slight delay to allow DOM updates
         const timeoutId = setTimeout(() => {
             bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
         }, 100);
@@ -23,18 +22,18 @@ export default function MessageList({ messages, currentUserId, onReplyClick }: M
 
     if (messages.length === 0) {
         return (
-            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-transparent">
-                <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center mb-6 border border-white/10 shadow-inner">
-                    <span className="text-3xl opacity-50 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">💬</span>
+            <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-transparent">
+                <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center mb-4 border border-white/10">
+                    <span className="text-2xl opacity-50">💬</span>
                 </div>
-                <p className="text-gray-400 font-medium text-sm">No transmissions on this channel. Initialize communication.</p>
+                <p className="text-gray-400 font-medium text-xs">No messages yet. Start the conversation.</p>
             </div>
         );
     }
 
     return (
-        <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-transparent flex flex-col custom-scrollbar">
-            <div className="flex-1" /> {/* Spacer to push messages to bottom if few */}
+        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-0.5 bg-transparent flex flex-col custom-scrollbar">
+            <div className="flex-1" />
             {messages.map((msg) => (
                 <MessageItem
                     key={msg.id}
@@ -43,7 +42,7 @@ export default function MessageList({ messages, currentUserId, onReplyClick }: M
                     onReplyClick={onReplyClick}
                 />
             ))}
-            <div ref={bottomRef} className="h-4" />
+            <div ref={bottomRef} className="h-2" />
         </div>
     );
 }

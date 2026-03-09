@@ -9,12 +9,12 @@ import { useTheme } from '@/context/ThemeContext';
 // ─── Logo ─────────────────────────────────────────────────────────────────────
 function AILogo({ size = 40 }: { size?: number }) {
     return (
-        <div
+        <img
+            src="/logo.png"
+            alt="AiClub Logo"
             style={{ width: size, height: size }}
-            className="bg-accent-500/10 border border-accent-500/20 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.2)] flex-shrink-0"
-        >
-            <span className="text-accent-500 font-black text-sm tracking-tighter">AI</span>
-        </div>
+            className="object-contain flex-shrink-0"
+        />
     );
 }
 

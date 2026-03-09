@@ -102,9 +102,12 @@ export default function Sidebar({ isCollapsed, setIsCollapsed, isMobileOpen, set
         >
             {/* Logo Area */}
             <div className={`p-6 border-b border-white/5 bg-transparent flex items-center relative overflow-hidden ${isCollapsed ? 'justify-center' : 'space-x-3'}`}>
-                <div className="shrink-0 w-10 h-10 bg-background border border-white/10 rounded-xl flex items-center justify-center relative group z-10 overflow-hidden">
-                    <div className="absolute inset-0 bg-accent-500/10 group-hover:bg-accent-500/20 transition-colors duration-500"></div>
-                    <span className="text-accent-500 font-bold text-lg tracking-tighter relative z-10">AI</span>
+                <div className="shrink-0 w-10 h-10 border border-white/10 rounded-xl flex items-center justify-center relative group z-10 overflow-hidden">
+                    <img
+                        src="/logo.png"
+                        alt="AI Club Logo"
+                        className="w-full h-full object-contain"
+                    />
                 </div>
                 {!isCollapsed && (
                     <motion.div

@@ -235,7 +235,9 @@ export default function TechFeedPage() {
                 <div className="space-y-5">
                     <div className="flex items-center gap-3">
                         <div className="flex -space-x-2">
-                            <div className="w-8 h-8 rounded-full border border-white/20 bg-accent-500/20 flex items-center justify-center font-bold text-[10px] text-accent-400 shadow-[0_0_10px_rgba(16,185,129,0.2)]">AI</div>
+                            <div className="w-8 h-8 rounded-full border border-white/20 overflow-hidden shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+                                <img src="/logo.png" alt="AI" className="w-full h-full object-contain" />
+                            </div>
                         </div>
                         <h2 className="text-xl font-extrabold text-white uppercase tracking-tight">Recommended for Your Research</h2>
                     </div>

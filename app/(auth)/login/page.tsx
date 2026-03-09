@@ -87,10 +87,11 @@ export default function LoginPage() {
         >
           {/* Glowing Badge Logo */}
           <div className="flex items-center gap-3 group cursor-pointer">
-            <div className="relative w-10 h-10 lg:w-14 lg:h-14 rounded-2xl bg-black border border-white/10 flex items-center justify-center shadow-2xl overflow-hidden">
-              <div className="absolute inset-0 bg-accent-500/20 group-hover:bg-accent-500/40 transition-colors duration-500"></div>
-              <span className="text-transparent bg-clip-text bg-gradient-to-br from-accent-400 to-accent-600 font-bold text-lg lg:text-2xl tracking-tighter relative z-10 transition-transform duration-500 group-hover:scale-110">AI</span>
-            </div>
+            <img
+              src="/logo.png"
+              alt="AiClub Logo"
+              className="w-10 h-10 lg:w-14 lg:h-14 object-contain shadow-2xl group-hover:scale-105 transition-transform duration-500"
+            />
             <div className="text-left">
               <span className="font-extrabold text-lg lg:text-xl text-white tracking-tight uppercase block leading-tight">AiClub AI</span>
               <span className="text-[9px] lg:text-[10px] font-bold text-accent-400 uppercase tracking-[0.3em] leading-none">Foundation Club</span>

@@ -9,7 +9,8 @@
   --glass-border: rgba(0, 0, 0, 0.1);
   --card-bg: 255, 255, 255;
   --card-border: 229, 229, 229;
-  --primary-rgb: 245, 158, 11; /* amber-500 */
+  --primary-rgb: 245, 158, 11;
+  /* amber-500 */
 }
 
 .light {
@@ -23,7 +24,8 @@
 
 html:not(.light) {
   --foreground-rgb: 243, 244, 246;
-  --background-rgb: 0, 0, 0; /* True black */
+  --background-rgb: 0, 0, 0;
+  /* True black */
   --glass-bg: 10, 10, 10;
   --glass-border: 255, 255, 255;
   --card-bg: 10, 10, 10;
@@ -76,6 +78,7 @@ body.auth-page {
 /* Glass & Transparency overrides */
 .light .bg-black\/20,
 .light .bg-black\/40,
+.light .bg-black\/50,
 .light .bg-black\/60,
 .light .bg-white\/5,
 .light .bg-white\/\[0\.02\],
@@ -97,6 +100,29 @@ body.auth-page {
 .light .border-white\/20,
 .light .border-white\/30 {
   border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Form Input Overrides for Light Theme */
+.light input[type="email"],
+.light input[type="password"],
+.light input[type="text"] {
+  background-color: #ffffff !important;
+  color: rgb(var(--foreground-rgb)) !important;
+  border-color: rgba(0, 0, 0, 0.15) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.light input[type="email"]::placeholder,
+.light input[type="password"]::placeholder,
+.light input[type="text"]::placeholder {
+  color: rgba(0, 0, 0, 0.4) !important;
+}
+
+.light input[type="email"]:focus,
+.light input[type="password"]:focus,
+.light input[type="text"]:focus {
+  border-color: rgb(var(--primary-rgb)) !important;
+  box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.2) !important;
 }
 
 /* Shadow overrides */
@@ -170,9 +196,9 @@ body.auth-page {
   }
 
   .card {
-     background-color: rgb(var(--card-bg));
-     border: 1px solid rgb(var(--card-border));
-     @apply rounded-3xl p-7 transition-all;
+    background-color: rgb(var(--card-bg));
+    border: 1px solid rgb(var(--card-border));
+    @apply rounded-3xl p-7 transition-all;
   }
 
   .card:hover {
@@ -229,4 +255,21 @@ body.auth-page {
 
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-gray-300;
+}
+
+/* Chat message content - reset all Quill/browser default margins */
+.msg-content p,
+.msg-content h1,
+.msg-content h2,
+.msg-content h3,
+.msg-content h4,
+.msg-content h5,
+.msg-content h6,
+.msg-content blockquote,
+.msg-content ul,
+.msg-content ol,
+.msg-content pre {
+  margin: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
 }
