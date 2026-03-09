@@ -43,7 +43,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background text-[rgb(var(--foreground-rgb))] transition-colors duration-500 overflow-x-hidden selection:bg-accent-500/30">
+    <div className="min-h-[100dvh] bg-background text-[rgb(var(--foreground-rgb))] transition-colors duration-500 overflow-x-hidden selection:bg-accent-500/30">
 
       {/* Ambient Animated Background (Subtle) */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
@@ -78,11 +78,11 @@ export default function DashboardLayout({
             ? (isCollapsed ? 88 : 256)
             : 0
         }}
-        className={`flex flex-col ${pathname.startsWith('/chat') ? 'h-screen overflow-hidden' : 'min-h-screen'} transition-all duration-300 ease-in-out`}
+        className={`flex flex-col ${pathname.startsWith('/chat') ? 'h-[100dvh] overflow-hidden' : 'min-h-[100dvh]'} transition-all duration-300 ease-in-out`}
       >
         <Header setIsMobileOpen={setIsMobileOpen} />
 
-        <main className={`relative w-full flex-1 flex flex-col ${pathname.startsWith('/chat') ? 'px-2 py-2 overflow-hidden' : 'px-4 sm:px-6 lg:px-8 py-8'}`}>
+        <main className={`relative w-full flex-1 flex flex-col ${pathname.startsWith('/chat') ? 'px-2 py-2 pb-4 overflow-hidden' : 'px-4 sm:px-6 lg:px-8 py-8'}`}>
           <div className={`${pathname.startsWith('/chat') ? 'flex-1 flex flex-col min-h-0' : 'animate-elevator-in'}`}>
             {children}
           </div>

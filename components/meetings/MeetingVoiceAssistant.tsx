@@ -150,7 +150,7 @@ export default function MeetingVoiceAssistant({
             const wavBlob = new Blob([wavHeader, pcmArray], { type: 'audio/wav' });
             const url = URL.createObjectURL(wavBlob);
             audioRef.current.src = url;
-            audioRef.current.play().catch(() => {});
+            audioRef.current.play().catch(() => { });
           } catch (e) {
             console.warn('Failed to play audio:', e);
           }
@@ -296,11 +296,9 @@ export default function MeetingVoiceAssistant({
         </button>
       )}
 
-      {/* Panel */}
       <div
-        className={`fixed top-0 right-0 h-full w-full sm:w-[440px] z-50 flex flex-col bg-background border-l border-white/10 shadow-[-10px_0px_40px_rgba(0,0,0,0.8)] transition-transform duration-300 ${
-          open ? 'translate-x-0' : 'translate-x-full'
-        }`}
+        className={`fixed top-0 right-0 h-full w-full sm:w-[440px] z-50 flex flex-col bg-white dark:bg-[#050505] border-l border-white/10 shadow-[-10px_0px_40px_rgba(0,0,0,0.8)] transition-transform duration-300 ${open ? 'translate-x-0' : 'translate-x-full'
+          }`}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 bg-card opacity-90 backdrop-blur-md flex-shrink-0">
@@ -326,21 +324,19 @@ export default function MeetingVoiceAssistant({
         <div className="flex bg-card border-b border-white/10 flex-shrink-0">
           <button
             onClick={() => setActiveTab('expert')}
-            className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest transition-all border-b-2 ${
-              activeTab === 'expert'
+            className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest transition-all border-b-2 ${activeTab === 'expert'
                 ? 'text-accent-400 border-accent-500 bg-accent-500/5'
                 : 'text-gray-500 border-transparent hover:text-gray-300'
-            }`}
+              }`}
           >
             🎤 Ask Expert
           </button>
           <button
             onClick={() => setActiveTab('record')}
-            className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest transition-all border-b-2 ${
-              activeTab === 'record'
+            className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest transition-all border-b-2 ${activeTab === 'record'
                 ? 'text-accent-400 border-accent-500 bg-accent-500/5'
                 : 'text-gray-500 border-transparent hover:text-gray-300'
-            }`}
+              }`}
           >
             📝 Smart Record
           </button>
@@ -369,11 +365,10 @@ export default function MeetingVoiceAssistant({
                 {voiceMessages.map((msg, i) => (
                   <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div
-                      className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm font-medium leading-relaxed ${
-                        msg.role === 'user'
+                      className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm font-medium leading-relaxed ${msg.role === 'user'
                           ? 'bg-accent-500/15 border border-accent-500/30 text-[rgb(var(--foreground-rgb))] rounded-tr-sm shadow-[0_0_8px_rgba(16,185,129,0.1)]'
                           : 'bg-card border border-white/10 text-[rgb(var(--foreground-rgb))] opacity-90 rounded-tl-sm'
-                      }`}
+                        }`}
                     >
                       {msg.text}
                       {msg.audioBase64 && (
@@ -390,7 +385,7 @@ export default function MeetingVoiceAssistant({
                               const wavBlob = new Blob([wavHeader, pcmArray], { type: 'audio/wav' });
                               const url = URL.createObjectURL(wavBlob);
                               audioRef.current!.src = url;
-                              audioRef.current!.play().catch(() => {});
+                              audioRef.current!.play().catch(() => { });
                             } catch (e) {
                               console.warn('Replay failed:', e);
                             }
@@ -426,11 +421,10 @@ export default function MeetingVoiceAssistant({
                   <button
                     type="button"
                     onClick={toggleListening}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all flex-1 justify-center ${
-                      isListening
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all flex-1 justify-center ${isListening
                         ? 'bg-red-500/20 border border-red-500/40 text-red-400 animate-pulse'
                         : 'bg-accent-500/10 border border-accent-500/30 text-accent-400 hover:bg-accent-500/20'
-                    }`}
+                      }`}
                   >
                     {isListening ? (
                       <>

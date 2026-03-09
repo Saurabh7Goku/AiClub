@@ -140,7 +140,7 @@ export default function MeetingAIAssistant({
 
             {/* Sliding Panel */}
             <div
-                className={`fixed top-0 right-0 h-full w-full sm:w-[420px] z-50 flex flex-col bg-background border-l border-white/10 shadow-[-10px_0px_40px_rgba(0,0,0,0.8)] transition-transform duration-300 ${open ? 'translate-x-0' : 'translate-x-full'}`}
+                className={`fixed top-0 right-0 h-full w-full sm:w-[420px] z-50 flex flex-col bg-white dark:bg-[#050505] border-l border-white/10 shadow-[-10px_0px_40px_rgba(0,0,0,0.8)] transition-transform duration-300 ${open ? 'translate-x-0' : 'translate-x-full'}`}
             >
                 {/* Panel Header */}
                 <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 bg-card">
@@ -173,7 +173,7 @@ export default function MeetingAIAssistant({
                                 className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm font-medium leading-relaxed ${msg.role === 'user'
                                     ? 'bg-accent-500/15 border border-accent-500/30 text-[rgb(var(--foreground-rgb))] rounded-tr-sm shadow-[0_0_8px_rgba(16,185,129,0.1)]'
                                     : 'bg-card border border-white/10 text-[rgb(var(--foreground-rgb))] rounded-tl-sm'
-                                }`}
+                                    }`}
                             >
                                 {msg.content}
                             </div>
@@ -204,7 +204,7 @@ export default function MeetingAIAssistant({
                         className={`w-full py-3 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 border ${summaryDone
                             ? 'bg-accent-500/20 border-accent-500/30 text-accent-400 shadow-[0_0_8px_rgba(16,185,129,0.2)]'
                             : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:text-white'
-                        } disabled:opacity-40 disabled:cursor-not-allowed`}
+                            } disabled:opacity-40 disabled:cursor-not-allowed`}
                     >
                         {summaryLoading ? (
                             <>
