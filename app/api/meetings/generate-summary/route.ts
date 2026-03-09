@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI, SchemaType, type ResponseSchema } from '@google/generative-ai';
+import { callNvidiaJSON } from '@/lib/ai/nvidia';
 
 const getApiKey = () => {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -23,21 +24,11 @@ const meetingOutputSchema: ResponseSchema = {
 
 export async function POST(request: NextRequest) {
     try {
-        const apiKey = getApiKey();
         const { transcript, meetingId } = await request.json();
 
         if (!transcript) {
             return NextResponse.json({ success: false, error: 'transcript is required' }, { status: 400 });
         }
-
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({
-            model: 'gemini-2.5-flash-lite',
-            generationConfig: {
-                responseMimeType: 'application/json',
-                responseSchema: meetingOutputSchema,
-            },
-        });
 
         const prompt = `You are an AI meeting assistant. Based on this EDITED transcript of a meeting, produce a professional summary and analysis.
     
@@ -51,17 +42,44 @@ export async function POST(request: NextRequest) {
     4) Produce an implementation plan in ordered steps.
     5) Produce detailed instructions for what to do next (checklists).
 
-    Return ONLY valid JSON matching the provided schema.`;
+    Return ONLY valid JSON with these keys: {"summary": "...", "decisions": ["..."], "actionItems": ["..."], "implementationPlan": ["..."], "instructions": ["..."]}`;
 
-        const result = await model.generateContent(prompt);
-        const text = result.response.text();
-        const parsed = JSON.parse(text);
+        // 1. Try Gemini first
+        try {
+            const apiKey = getApiKey();
+            const genAI = new GoogleGenerativeAI(apiKey);
+            const model = genAI.getGenerativeModel({
+                model: 'gemini-2.5-flash-lite',
+                generationConfig: {
+                    responseMimeType: 'application/json',
+                    responseSchema: meetingOutputSchema,
+                },
+            });
+
+            const result = await model.generateContent(prompt);
+            const text = result.response.text();
+            const parsed = JSON.parse(text);
+
+            return NextResponse.json({
+                success: true,
+                data: {
+                    meetingId,
+                    modelUsed: 'gemini-2.0-flash',
+                    ...parsed,
+                },
+            });
+        } catch (geminiError) {
+            console.warn('Gemini generate-summary failed, trying NVIDIA fallback:', geminiError instanceof Error ? geminiError.message : geminiError);
+        }
+
+        // 2. Fallback to NVIDIA (mistral-large for meeting notes)
+        const parsed = await callNvidiaJSON(prompt, { model: 'mistral', temperature: 0.15 });
 
         return NextResponse.json({
             success: true,
             data: {
                 meetingId,
-                modelUsed: 'gemini-2.0-flash',
+                modelUsed: 'nvidia/mistral-large-3-675b',
                 ...parsed,
             },
         });

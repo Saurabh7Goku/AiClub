@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { callNvidia } from '@/lib/ai/nvidia';
 
 const getApiKey = () => {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -11,7 +12,6 @@ const getApiKey = () => {
 
 export async function POST(request: NextRequest) {
   try {
-    const apiKey = getApiKey();
     const { rawTranscript, meetingId } = await request.json();
 
     if (!rawTranscript || typeof rawTranscript !== 'string') {
@@ -20,11 +20,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash-lite',
-    });
 
     const prompt = `You are an expert meeting transcript editor. Your job is to clean up a raw, noisy meeting transcript.
 
@@ -45,8 +40,28 @@ Instructions:
 
 Return ONLY the cleaned transcript text. No explanations, no preamble.`;
 
-    const result = await model.generateContent(prompt);
-    const cleanedTranscript = result.response.text();
+    // 1. Try Gemini first
+    try {
+      const apiKey = getApiKey();
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({
+        model: 'gemini-2.5-flash-lite',
+      });
+
+      const result = await model.generateContent(prompt);
+      const cleanedTranscript = result.response.text();
+
+      return NextResponse.json({
+        success: true,
+        cleanedTranscript,
+        meetingId,
+      });
+    } catch (geminiError) {
+      console.warn('Gemini clean-transcript failed, trying NVIDIA fallback:', geminiError instanceof Error ? geminiError.message : geminiError);
+    }
+
+    // 2. Fallback to NVIDIA (mistral-large for meeting notes)
+    const cleanedTranscript = await callNvidia(prompt, { model: 'mistral', temperature: 0.15 });
 
     return NextResponse.json({
       success: true,

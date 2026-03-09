@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI, SchemaType, ResponseSchema } from '@google/generative-ai';
 import { AIDraft, FeasibilityNotes } from '@/types';
+import { callNvidiaJSON } from './nvidia';
 
 // Initialize Gemini
 const getGeminiClient = () => {
@@ -160,12 +161,50 @@ Be specific, practical, and actionable. Consider current AI/ML best practices an
         status: 'success',
       },
     };
-  } catch (error) {
-    console.error('Error generating AI draft:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to generate AI draft',
-    };
+  } catch (geminiError) {
+    console.warn('Gemini AI draft failed, trying NVIDIA fallback:', geminiError instanceof Error ? geminiError.message : geminiError);
+
+    // NVIDIA fallback
+    try {
+      const nvidiaPrompt = `You are an AI/ML technical architect reviewing an idea submission for an AI/ML Intelligence Club.
+
+Idea Title: ${ideaTitle}
+Category: ${category}
+Problem Statement: ${problemStatement}
+Proposed AI Usage: ${proposedAiUsage}
+
+Please analyze this idea and respond ONLY with a JSON object with these exact keys:
+{"refinedDescription": "...", "architectureOutline": "...", "discussionAgenda": ["..."], "feasibilityNotes": {"technical": "...", "operational": "...", "risks": ["..."]}, "nextSteps": ["..."]}
+
+Be specific, practical, and actionable.`;
+
+      const parsed = await callNvidiaJSON<{
+        refinedDescription: string;
+        architectureOutline: string;
+        discussionAgenda: string[];
+        feasibilityNotes: FeasibilityNotes;
+        nextSteps: string[];
+      }>(nvidiaPrompt, { model: 'phi-4', temperature: 0.6 });
+
+      return {
+        success: true,
+        data: {
+          refinedDescription: parsed.refinedDescription,
+          architectureOutline: parsed.architectureOutline,
+          discussionAgenda: parsed.discussionAgenda,
+          feasibilityNotes: parsed.feasibilityNotes,
+          nextSteps: parsed.nextSteps,
+          modelUsed: 'nvidia/phi-4-mini-flash-reasoning',
+          status: 'success',
+        },
+      };
+    } catch (nvidiaError) {
+      console.error('NVIDIA AI draft fallback also failed:', nvidiaError);
+      return {
+        success: false,
+        error: `Gemini: ${geminiError instanceof Error ? geminiError.message : 'unknown'} | NVIDIA: ${nvidiaError instanceof Error ? nvidiaError.message : 'unknown'}`,
+      };
+    }
   }
 }
 
@@ -215,12 +254,37 @@ Provide a well-organized agenda with discussion points and decision points.`;
       success: true,
       data: parsed,
     };
-  } catch (error) {
-    console.error('Error generating meeting agenda:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to generate meeting agenda',
-    };
+  } catch (geminiError) {
+    console.warn('Gemini meeting agenda failed, trying NVIDIA fallback:', geminiError instanceof Error ? geminiError.message : geminiError);
+
+    try {
+      const nvidiaPrompt = `You are organizing a meeting to review an AI/ML idea for an Intelligence Club.
+
+Idea Title: ${ideaTitle}
+Problem Statement: ${problemStatement}
+Refined Description: ${refinedDescription}
+Technical Feasibility: ${feasibilityNotes.technical}
+Operational Feasibility: ${feasibilityNotes.operational}
+Known Risks: ${feasibilityNotes.risks.join(', ')}
+
+Create a structured meeting agenda. Respond ONLY with JSON:
+{"agenda": ["..."], "discussionPoints": ["..."], "decisionPoints": ["..."], "timeAllocation": [{"item": "...", "minutes": 10}]}
+
+Make it realistic for a 60-minute meeting.`;
+
+      const parsed = await callNvidiaJSON<MeetingAgendaOutput>(nvidiaPrompt, { model: 'phi-4', temperature: 0.6 });
+
+      return {
+        success: true,
+        data: parsed,
+      };
+    } catch (nvidiaError) {
+      console.error('NVIDIA meeting agenda fallback also failed:', nvidiaError);
+      return {
+        success: false,
+        error: `Gemini: ${geminiError instanceof Error ? geminiError.message : 'unknown'} | NVIDIA: ${nvidiaError instanceof Error ? nvidiaError.message : 'unknown'}`,
+      };
+    }
   }
 }
 
@@ -251,12 +315,31 @@ Provide a concise summary suitable for a tech feed display.`;
       success: true,
       data: summary,
     };
-  } catch (error) {
-    console.error('Error summarizing article:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to summarize article',
-    };
+  } catch (geminiError) {
+    console.warn('Gemini article summary failed, trying NVIDIA fallback:', geminiError instanceof Error ? geminiError.message : geminiError);
+
+    try {
+      const { callNvidia } = await import('./nvidia');
+      const nvidiaPrompt = `Summarize the following AI/ML technology article in 2-3 sentences. Focus on the key innovation or update.
+
+Title: ${title}
+Content: ${content}
+
+Provide a concise summary suitable for a tech feed display. Return ONLY the summary text, no JSON.`;
+
+      const summary = await callNvidia(nvidiaPrompt, { model: 'phi-4', temperature: 0.7 });
+
+      return {
+        success: true,
+        data: summary,
+      };
+    } catch (nvidiaError) {
+      console.error('NVIDIA article summary fallback also failed:', nvidiaError);
+      return {
+        success: false,
+        error: `Gemini: ${geminiError instanceof Error ? geminiError.message : 'unknown'} | NVIDIA: ${nvidiaError instanceof Error ? nvidiaError.message : 'unknown'}`,
+      };
+    }
   }
 }
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { callNvidia } from '@/lib/ai/nvidia';
 
 const getApiKey = () => {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -11,7 +12,6 @@ const getApiKey = () => {
 
 export async function POST(request: NextRequest) {
     try {
-        const apiKey = getApiKey();
         const { messages, boardContext, meetingId } = await request.json();
 
         if (!messages || !Array.isArray(messages)) {
@@ -32,34 +32,47 @@ export async function POST(request: NextRequest) {
         - Encourage collaboration.
         - Your name is "AI Meeting Assistant".`;
 
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({
-            model: 'gemini-2.5-flash-lite',
-            systemInstruction: systemPrompt,
-        });
-
-        // Format history for Gemini — skip leading model messages (e.g. the welcome msg)
-        const rawHistory = messages.slice(0, -1).map((m: any) => ({
-            role: m.role === 'user' ? 'user' : 'model',
-            parts: [{ text: m.content }],
-        }));
-
-        // Gemini requires history to start with 'user' role — drop leading model entries
-        let startIdx = 0;
-        while (startIdx < rawHistory.length && rawHistory[startIdx].role === 'model') {
-            startIdx++;
-        }
-        const history = rawHistory.slice(startIdx);
-
-        const chat = model.startChat({
-            history,
-        });
-
         const lastMessage = messages[messages.length - 1].content;
-        console.log('Last message:', lastMessage);
-        const result = await chat.sendMessage(lastMessage);
-        const response = await result.response;
-        const reply = response.text();
+
+        // 1. Try Gemini first
+        try {
+            const apiKey = getApiKey();
+            const genAI = new GoogleGenerativeAI(apiKey);
+            const model = genAI.getGenerativeModel({
+                model: 'gemini-2.5-flash-lite',
+                systemInstruction: systemPrompt,
+            });
+
+            // Format history for Gemini — skip leading model messages
+            const rawHistory = messages.slice(0, -1).map((m: any) => ({
+                role: m.role === 'user' ? 'user' : 'model',
+                parts: [{ text: m.content }],
+            }));
+
+            let startIdx = 0;
+            while (startIdx < rawHistory.length && rawHistory[startIdx].role === 'model') {
+                startIdx++;
+            }
+            const history = rawHistory.slice(startIdx);
+
+            const chat = model.startChat({ history });
+            const result = await chat.sendMessage(lastMessage);
+            const response = await result.response;
+            const reply = response.text();
+
+            return NextResponse.json({
+                success: true,
+                reply: reply,
+            });
+        } catch (geminiError) {
+            console.warn('Gemini meeting-chat failed, trying NVIDIA fallback:', geminiError instanceof Error ? geminiError.message : geminiError);
+        }
+
+        // 2. Fallback to NVIDIA (mistral-large for meeting notes)
+        const chatHistory = messages.map((m: any) => `${m.role.toUpperCase()}: ${m.content}`).join('\n');
+        const nvidiaPrompt = `${systemPrompt}\n\nCHAT HISTORY:\n${chatHistory}\n\nRespond to the last user message. Return ONLY your response text.`;
+
+        const reply = await callNvidia(nvidiaPrompt, { model: 'mistral', temperature: 0.15 });
 
         return NextResponse.json({
             success: true,

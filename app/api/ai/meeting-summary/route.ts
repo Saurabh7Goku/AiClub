@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { callNvidia } from '@/lib/ai/nvidia';
 
 const getApiKey = () => {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -11,13 +12,7 @@ const getApiKey = () => {
 
 export async function POST(request: NextRequest) {
     try {
-        const apiKey = getApiKey();
         const { messages, boardContent } = await request.json();
-
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({
-            model: 'gemini-2.5-flash-lite',
-        });
 
         const prompt = `You are an AI meeting assistant. Based on the chat history and the current collaborative board content, generate a concise set of structured summary notes.
         
@@ -34,9 +29,28 @@ export async function POST(request: NextRequest) {
         4. Focus on clarity and actionability.
         5. Return ONLY the summary text, no conversational filler.`;
 
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const summary = response.text();
+        // 1. Try Gemini first
+        try {
+            const apiKey = getApiKey();
+            const genAI = new GoogleGenerativeAI(apiKey);
+            const model = genAI.getGenerativeModel({
+                model: 'gemini-2.5-flash-lite',
+            });
+
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            const summary = response.text();
+
+            return NextResponse.json({
+                success: true,
+                summary: summary,
+            });
+        } catch (geminiError) {
+            console.warn('Gemini meeting-summary failed, trying NVIDIA fallback:', geminiError instanceof Error ? geminiError.message : geminiError);
+        }
+
+        // 2. Fallback to NVIDIA (mistral-large for meeting notes)
+        const summary = await callNvidia(prompt, { model: 'mistral', temperature: 0.15 });
 
         return NextResponse.json({
             success: true,
