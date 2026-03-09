@@ -292,7 +292,7 @@ export async function summarizeTechArticle(
     try {
         const ai = getGeminiClient();
 
-        const prompt = `Summarize the following AI/ML technology article in 2-3 sentences. Focus on the key innovation or update.
+        const prompt = `Summarize the following technology article in 2-3 sentences. Focus on the key innovation or update.
 
 Title: ${title}
 Content: ${content}
